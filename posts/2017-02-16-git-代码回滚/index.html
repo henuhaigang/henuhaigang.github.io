@@ -157,7 +157,7 @@ About
 Updated:
 </span> <time class="text-sm sm:text-base" datetime="2025-03-12T13:39:20.763Z">12 Mar, 2025</time> </div> <span aria-hidden="true" class="max-sm:hidden">|</span> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/2017-02-16-Git-代码回滚.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent max-sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> </div> <article id="article" class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <h1 id="git-revert-和-git-reset-的区别"><strong>git revert</strong> 和 <strong>git reset</strong> 的区别</h1>
 <p>先看图：</p>
-<p><img src="/assets/images/gitimg.png" alt="sourceTree"></p>
+<p><img src="/public/assets/images/gitimg.png" alt="sourceTree"></p>
 <p><strong>sourceTree</strong> 中 <strong>revert</strong> 译为**<code>提交回滚</code>**，作用为忽略你指定的版本，然后提交一个新的版本。新的版本中已近删除了你所指定的版本。</p>
 <p><strong>reset</strong> 为 <strong>重置到这次提交</strong>，将内容重置到指定的版本。<code>git reset</code> 命令后面是需要加2种参数的：<code>–-hard</code> 和 <code>–-soft</code>。这条命令默认情况下是 <code>-–soft</code>。</p>
 <p>执行上述命令时，这该条commit号之 后（时间作为参考点）的所有commit的修改都会退回到git缓冲区中。使用<code>git status</code> 命令可以在缓冲区中看到这些修改。而如果加上<code>-–hard</code>参数，则缓冲区中不会存储这些修改，git会直接丢弃这部分内容。可以使用 <code>git push origin HEAD --force</code> 强制将分区内容推送到远程服务器。</p>
