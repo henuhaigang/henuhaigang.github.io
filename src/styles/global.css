@@ -67,3 +67,15 @@ html[data-theme="dark"] {
 :target {
   scroll-margin-block: 1rem;
 }
+body {
+  font-family:
+    "Inter",
+    "HarmonyOS Sans SC",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  line-height: 1.75;
+}
