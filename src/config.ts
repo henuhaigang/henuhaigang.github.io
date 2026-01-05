@@ -3,7 +3,7 @@ export const SITE = {
   author: "Sat Naing",
   profile: "https://github.com/henuhaigang",
   desc: "A minimal, responsive and SEO-friendly Astro blog theme.",
-  title: "AstroPaper",
+  title: "scorpion's blog",
   ogImage: "astropaper-og.jpg",
   lightAndDarkMode: true,
   postPerIndex: 4,
