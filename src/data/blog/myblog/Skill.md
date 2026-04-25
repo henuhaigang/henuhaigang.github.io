@@ -1,9 +1,9 @@
 ---
 layout:     post
 title:     Andrej-Karpathy-Skills 仓库深度分析与总结
-subtitle:   ai
-pubDatetime: 2026-04-26T04:59:04.866Z
-modDatetime: 2026-04-26T04:59:04.866Z
+subtitle:   ai skill
+pubDatetime: 2026-04-25T04:59:04.866Z
+modDatetime: 2026-04-25T04:59:04.866Z
 author:     henuhaigang
 header-img: img/post-bg-iWatch.jpg
 catalog: true
