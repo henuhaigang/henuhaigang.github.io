@@ -1,3 +1,18 @@
+---
+layout:     post
+title:     AI
+subtitle:   ai
+pubDatetime: 2026-04-26T04:59:04.866Z
+modDatetime: 2026-04-26T04:59:04.866Z
+author:     henuhaigang
+header-img: img/post-bg-iWatch.jpg
+catalog: true
+tags:
+    - ai
+    - skill
+description: Andrej-Karpathy-Skills 仓库深度分析与总结
+---
+
 # Andrej-Karpathy-Skills 仓库深度分析与总结
 该仓库聚焦于优化 AI 编码助手（如 Claude、Cursor）的编码行为，核心源于 Andrej Karpathy 对大语言模型（LLM）编码常见缺陷的观察，通过一套可落地的规范解决 LLM 编码的核心痛点，以下从**仓库结构、核心背景、核心问题、核心解决方案、产品形态、核心价值** 六个维度展开分析：
 
