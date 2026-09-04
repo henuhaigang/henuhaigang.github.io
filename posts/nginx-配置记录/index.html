@@ -1,0 +1,505 @@
+<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="canonical" href="https://henuhaigang.github.io/posts/nginx-%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/"><meta name="generator" content="Astro v5.16.6"><!-- General Meta Tags --><title>nginx 配置速查 | scorpion&#39;s blog</title><meta name="title" content="nginx 配置速查 | scorpion's blog"><meta name="description" content="nginx配置详解参考"><meta name="author" content="henuhaigang"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="nginx 配置速查 | scorpion's blog"><meta property="og:description" content="nginx配置详解参考"><meta property="og:url" content="https://henuhaigang.github.io/posts/nginx-%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/"><meta property="og:image" content="https://henuhaigang.github.io/posts/nginx-%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/index.png"><!-- Article Published/Modified time --><meta property="article:published_time" content="2026-08-31T04:59:04.866Z"><meta property="article:modified_time" content="2026-08-31T04:59:04.866Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://henuhaigang.github.io/posts/nginx-%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/"><meta property="twitter:title" content="nginx 配置速查 | scorpion's blog"><meta property="twitter:description" content="nginx配置详解参考"><meta property="twitter:image" content="https://henuhaigang.github.io/posts/nginx-%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/index.png"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"nginx 配置速查 | scorpion's blog","image":"https://henuhaigang.github.io/posts/nginx-%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/index.png","datePublished":"2026-08-31T04:59:04.866Z","dateModified":"2026-08-31T04:59:04.866Z","author":[{"@type":"Person","name":"henuhaigang","url":"https://github.com/henuhaigang"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="scorpion's blog" href="https://henuhaigang.github.io/rss.xml"><meta name="theme-color" content=""><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.QW52Ox2j.js"></script><script src="/toggle-theme.js"></script><link rel="stylesheet" href="/_astro/about.BBFPT4Xy.css">
+<style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media(prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
+:where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
+</style><style>[data-astro-transition-scope="astro-fam6wyqg-1"] { view-transition-name: nginx-\914D\7F6E\901F\67E5; }@layer astro { ::view-transition-old(nginx-\914D\7F6E\901F\67E5) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(nginx-\914D\7F6E\901F\67E5) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(nginx-\914D\7F6E\901F\67E5) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(nginx-\914D\7F6E\901F\67E5) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-2"] { view-transition-name: \7EC8\7AEF; }@layer astro { ::view-transition-old(\7EC8\7AEF) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(\7EC8\7AEF) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(\7EC8\7AEF) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(\7EC8\7AEF) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-3"] { view-transition-name: nginx; }@layer astro { ::view-transition-old(nginx) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(nginx) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(nginx) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(nginx) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style></head> <body data-astro-cid-sckkx6r4>  <a id="skip-to-content" href="#main-content" class="absolute start-16 -top-full z-50 bg-background px-3 py-2 text-accent backdrop-blur-lg transition-all focus:top-4">
+Skip to content
+</a> <header class="app-layout flex flex-col items-center justify-between sm:flex-row"> <div id="top-nav-wrap" class="py-4 sm:py-6 border-b border-border relative w-full bg-background flex items-baseline justify-between sm:items-center"> <a href="/" class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"> scorpion&#39;s blog </a> <nav id="nav-menu" class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"> <button id="menu-btn" class="focus-outline self-end p-2 sm:hidden" aria-label="Open Menu" aria-expanded="false" aria-controls="menu-items"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden" id="close-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-menu-deep" id="menu-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6h16" /><path d="M7 12h13" /><path d="M10 18h10" /></svg> </button> <ul id="menu-items" class="mt-4 grid w-44 grid-cols-2 place-content-center gap-2 [&#38;>li>a]:block [&#38;>li>a]:px-4 [&#38;>li>a]:py-3 [&#38;>li>a]:text-center [&#38;>li>a]:font-medium [&#38;>li>a]:hover:text-accent sm:[&#38;>li>a]:px-2 sm:[&#38;>li>a]:py-1 hidden sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0"> <li class="col-span-2"> <a href="/posts" class="active-nav">
+Posts
+</a> </li> <li class="col-span-2"> <a href="/tags">
+Tags
+</a> </li> <li class="col-span-2"> <a href="/about">
+About
+</a> </li> <li class="col-span-2"> <a href="/archives" title="Archives" aria-label="archives" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex justify-center p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden sm:inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" /><path d="M10 12l4 0" /></svg> <span class="sm:sr-only">Archives</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <a href="/search" title="Search" aria-label="search" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg> <span class="sr-only">Search</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <button id="theme-btn" class="focus-outline relative size-12 p-4 sm:size-8 hover:[&>svg]:stroke-accent" title="Toggles light & dark" aria-label="auto" aria-live="polite"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg> </button> </li> </ul> </nav> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <div class="app-layout flex items-center justify-start"><a id="back-button" href="/" class="group inline-flex items-center gap-1 hover:text-accent focus-outline -ms-2 mt-8 mb-2 hover:text-foreground/75"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg><span>Go back</span> </a></div><script type="module">function o(){const t=document.querySelector("#back-button"),e=sessionStorage.getItem("backUrl");e&&t&&(t.href=e)}document.addEventListener("astro:page-load",o);o();</script> <main id="main-content" class="app-layout pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl" data-astro-transition-scope="astro-fam6wyqg-1"> nginx 配置速查 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2026-08-31T04:59:04.866Z">31 Aug, 2026</time> </div> <span aria-hidden="true" class="max-sm:hidden">|</span> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/nginx 配置记录.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent max-sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> </div> <article id="article" class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <p>Nginx 的核心配置文件通常为 nginx.conf，其结构清晰，主要由‌全局块（Main）‌、‌Events 块‌、‌HTTP 块‌（包含 Server 和 Location）组成。</p>
+<p>以下是一份详细且通用的 Nginx 配置示例，涵盖了性能优化、反向代理、负载均衡、日志管理及动静分离等核心功能，并附带逐行详细说明。</p>
+<ol>
+<li>Nginx 配置文件结构概览
+nginx</li>
+</ol>
+<h1 id="-全局块-main-context">================= 全局块 (Main Context) =================</h1>
+<h1 id="指定运行-nginx-的用户和用户组提高安全性">指定运行 Nginx 的用户和用户组，提高安全性</h1>
+<p>user www-data;</p>
+<h1 id="工作进程数通常设置为-cpu-核心数或-auto自动检测">工作进程数，通常设置为 CPU 核心数或 auto（自动检测）</h1>
+<p>worker_processes auto;</p>
+<h1 id="错误日志路径及级别-debug-info-notice-warn-error-crit-alert-emerg">错误日志路径及级别 (debug, info, notice, warn, error, crit, alert, emerg)</h1>
+<p>error_log /var/log/nginx/error.log warn;</p>
+<h1 id="pid-文件路径记录主进程-id">PID 文件路径，记录主进程 ID</h1>
+<p>pid /var/run/nginx.pid;</p>
+<h1 id="单个-worker-进程最大打开文件描述符数需配合系统-ulimit-设置">单个 worker 进程最大打开文件描述符数，需配合系统 ulimit 设置</h1>
+<p>worker_rlimit_nofile 65535;</p>
+<h1 id="-events-块">================= Events 块 =================</h1>
+<p>events {
+# 使用 epoll 事件驱动模型（Linux 下最高效）
+use epoll;</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span># 每个 worker 进程允许的最大并发连接数</span></span>
+<span class="line"><span># 最大理论连接数 = worker_processes * worker_connections</span></span>
+<span class="line"><span>worker_connections 1024;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 是否允许同时接受多个新连接</span></span>
+<span class="line"><span>multi_accept on;</span></span></code></pre>
+<p>}</p>
+<h1 id="-http-块">================= HTTP 块 =================</h1>
+<p>http {
+# 引入 MIME 类型定义文件
+include /etc/nginx/mime.types;</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span># 默认文件类型，当无法识别文件类型时使用</span></span>
+<span class="line"><span>default_type application/octet-stream;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># --- 日志格式定义 ---</span></span>
+<span class="line"><span># 定义名为 'main' 的日志格式</span></span>
+<span class="line"><span>log_format main '$remote_addr - $remote_user [$time_local] "$request" '</span></span>
+<span class="line"><span>                '$status $body_bytes_sent "$http_referer" '</span></span>
+<span class="line"><span>                '"$http_user_agent" "$http_x_forwarded_for"';</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 访问日志路径及使用的格式</span></span>
+<span class="line"><span>access_log /var/log/nginx/access.log main;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># --- 基础性能优化 ---</span></span>
+<span class="line"><span># 开启高效文件传输模式 (sendfile)，减少用户态与内核态切换</span></span>
+<span class="line"><span>sendfile on;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 配合 sendfile 使用，防止网络阻塞</span></span>
+<span class="line"><span>tcp_nopush on;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 禁用 Nagle 算法，减少网络延迟</span></span>
+<span class="line"><span>tcp_nodelay on;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 保持连接超时时间</span></span>
+<span class="line"><span>keepalive_timeout 65;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 客户端请求头缓冲区大小</span></span>
+<span class="line"><span>client_header_buffer_size 1k;</span></span>
+<span class="line"><span>large_client_header_buffers 4 4k;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 限制上传文件大小，默认 1m，上传大文件需调大</span></span>
+<span class="line"><span>client_max_body_size 10m;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># --- Gzip 压缩配置 ---</span></span>
+<span class="line"><span>gzip on;</span></span>
+<span class="line"><span>gzip_disable "msie6";</span></span>
+<span class="line"><span>gzip_vary on;</span></span>
+<span class="line"><span>gzip_proxied any;</span></span>
+<span class="line"><span>gzip_comp_level 6;</span></span>
+<span class="line"><span>gzip_min_length 1000;</span></span>
+<span class="line"><span>gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># --- 上游服务器组 (负载均衡) ---</span></span>
+<span class="line"><span>upstream backend_servers {</span></span>
+<span class="line"><span>    # 负载均衡策略：轮询 (默认)、ip_hash、least_conn 等</span></span>
+<span class="line"><span>    # ip_hash: 根据客户端 IP 哈希分配，解决 Session 问题</span></span>
+<span class="line"><span>    # least_conn: 最少连接数优先</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    server 192.168.1.10:8080 weight=5; # 权重高，处理更多请求</span></span>
+<span class="line"><span>    server 192.168.1.11:8080 weight=3;</span></span>
+<span class="line"><span>    server 192.168.1.12:8080 backup;   # 备份服务器，仅当其他服务器宕机时启用</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># ================= Server 块 (虚拟主机) =================</span></span>
+<span class="line"><span>server {</span></span>
+<span class="line"><span>    # 监听端口</span></span>
+<span class="line"><span>    listen 80;</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    # 服务器域名，支持通配符和正则</span></span>
+<span class="line"><span>    server_name example.com www.example.com;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    # 字符集</span></span>
+<span class="line"><span>    charset utf-8;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    # --- 静态资源根目录 ---</span></span>
+<span class="line"><span>    root /usr/share/nginx/html;</span></span>
+<span class="line"><span>    index index.html index.htm;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    # --- Location 匹配规则 ---</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    # 1. 精确匹配或前缀匹配：处理静态资源</span></span>
+<span class="line"><span>    location ~* \.(gif|jpg|jpeg|png|css|js|ico)$ {</span></span>
+<span class="line"><span>        expires 30d; # 浏览器缓存过期时间</span></span>
+<span class="line"><span>        access_log off; # 静态资源通常不记录访问日志以节省 IO</span></span>
+<span class="line"><span>        add_header Cache-Control "public";</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    # 2. 反向代理：将动态请求转发给后端服务器</span></span>
+<span class="line"><span>    location /api/ {</span></span>
+<span class="line"><span>        proxy_pass http://backend_servers; # 指向 upstream 定义的组</span></span>
+<span class="line"><span>        </span></span>
+<span class="line"><span>        # 传递真实客户端 IP 给后端</span></span>
+<span class="line"><span>        proxy_set_header Host $host;</span></span>
+<span class="line"><span>        proxy_set_header X-Real-IP $remote_addr;</span></span>
+<span class="line"><span>        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span></span>
+<span class="line"><span>        </span></span>
+<span class="line"><span>        # 代理超时设置</span></span>
+<span class="line"><span>        proxy_connect_timeout 60s;</span></span>
+<span class="line"><span>        proxy_send_timeout 60s;</span></span>
+<span class="line"><span>        proxy_read_timeout 60s;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    # 3. 默认位置</span></span>
+<span class="line"><span>    location / {</span></span>
+<span class="line"><span>        try_files $uri $uri/ /index.html;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    # 4. 错误页面配置</span></span>
+<span class="line"><span>    error_page 404 /404.html;</span></span>
+<span class="line"><span>    error_page 500 502 503 504 /50x.html;</span></span>
+<span class="line"><span>    location = /50x.html {</span></span>
+<span class="line"><span>        root /usr/share/nginx/html;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># ================= HTTPS Server 块 (可选) =================</span></span>
+<span class="line"><span># server {</span></span>
+<span class="line"><span>#     listen 443 ssl http2;</span></span>
+<span class="line"><span>#     server_name example.com;</span></span>
+<span class="line"><span>#     </span></span>
+<span class="line"><span>#     ssl_certificate /etc/nginx/ssl/cert.pem;</span></span>
+<span class="line"><span>#     ssl_certificate_key /etc/nginx/ssl/key.pem;</span></span>
+<span class="line"><span>#     </span></span>
+<span class="line"><span>#     # SSL 优化配置</span></span>
+<span class="line"><span>#     ssl_protocols TLSv1.2 TLSv1.3;</span></span>
+<span class="line"><span>#     ssl_ciphers HIGH:!aNULL:!MD5;</span></span>
+<span class="line"><span>#     ssl_prefer_server_ciphers on;</span></span>
+<span class="line"><span>#     </span></span>
+<span class="line"><span>#     location / {</span></span>
+<span class="line"><span>#         proxy_pass http://backend_servers;</span></span>
+<span class="line"><span>#     }</span></span>
+<span class="line"><span># }</span></span></code></pre>
+<p>}</p>
+<ol start="2">
+<li>核心配置模块详解
+A. 全局块 (Main)
+worker_processes‌: 决定 Nginx 启动多少个工作进程。设置为 auto 会让 Nginx 自动根据 CPU 核心数调整，这是大多数场景下的最佳实践。
+error_log‌: 定义错误日志。级别建议生产环境使用 warn 或 error，调试时使用 info 或 debug。
+worker_rlimit_nofile‌: 修改进程能打开的最大文件句柄数。高并发场景下必须调大此值，否则会出现 “Too many open files” 错误。
+B. Events 块
+use epoll‌: Linux 系统下推荐使用 epoll，它是多路复用 I/O 模型，能高效处理大量并发连接。
+worker_connections‌: 单个进程的最大连接数。总并发能力约为 worker_processes * worker_connections。注意不要超过系统限制。
+C. HTTP 块
+include mime.types‌: 确保 Nginx 能正确识别文件类型（如 .css, .js），从而返回正确的 Content-Type。
+sendfile on‌: 开启零拷贝技术，直接在 kernel 空间传输文件，极大提升静态文件服务性能。
+gzip‌: 开启压缩可显著减少带宽消耗，提升页面加载速度。gzip_min_length 避免压缩过小的文件（压缩开销可能大于收益）。
+upstream‌: 定义后端服务器集群。
+weight‌: 权重，数值越大分配的请求越多。
+backup‌: 标记为备份节点，只有主节点全部不可用时才生效。
+策略‌: 默认为轮询（Round Robin），也可配置 ip_hash（会话保持）或 least_conn（最少连接）。
+D. Server 块
+listen‌: 指定监听的端口。
+server_name‌: 基于域名的虚拟主机配置。Nginx 会根据请求头中的 Host 字段匹配对应的 server 块。
+root vs alias‌:
+root: 将 location 路径追加到 root 路径后。例如 root /var/www; location /img { … } 访问 /img/a.jpg 对应文件 /var/www/img/a.jpg。
+alias: 替换路径。例如 alias /data/pics; 访问 /img/a.jpg 对应文件 /data/pics/a.jpg。
+E. Location 块
+匹配优先级‌:
+= : 精确匹配，优先级最高。
+^~ : 前缀匹配，如果匹配成功，不再检查正则。
+~ / ~* : 正则匹配（区分/不区分大小写）。
+无前缀修饰 : 普通前缀匹配。
+proxy_pass‌: 反向代理的核心指令。注意末尾是否有 /：
+proxy_pass <a href="http://backend">http://backend</a>; (无斜杠): URI 原样转发。
+proxy_pass <a href="http://backend/">http://backend/</a>; (有斜杠): 去掉 location 匹配的部分后转发。</li>
+<li>常用管理命令</li>
+</ol>
+<p>在修改配置文件后，务必执行以下操作以确保服务稳定：</p>
+<p>检查配置语法‌:</p>
+<p>bash
+nginx -t</p>
+<p>如果输出 syntax is ok 和 test is successful，则配置无误。</p>
+<p>平滑重载配置‌ (无需停止服务):</p>
+<p>bash
+nginx -s reload</p>
+<p>查看版本及编译参数‌:</p>
+<p>bash
+nginx -V</p>
+<p>停止服务‌:</p>
+<p>bash
+nginx -s stop  # 快速停止
+nginx -s quit  # 优雅停止（处理完当前请求后退出）</p>
+<ol start="4">
+<li>最佳实践建议
+模块化配置‌: 当站点较多时，不要在 nginx.conf 中堆积所有 server 块。使用 include /etc/nginx/conf.d/*.conf; 将不同域名的配置拆分到独立文件中。
+安全加固‌:
+隐藏 Nginx 版本号：在 http 块中添加 server_tokens off;。
+限制 HTTP 方法：在 location 中只允许必要的 method，如 if ($request_method !~ ^(GET|POST)$) { return 405; }。
+日志切割‌: Nginx 本身不支持自动日志切割，建议配合 logrotate 工具定期切割和清理日志文件，防止磁盘占满。
+HTTPS 强制跳转‌: 为了安全，建议在监听 80 端口的 server 块中使用 return 301 https://$host$request_uri; 将 HTTP 请求永久重定向到 HTTPS。</li>
+</ol> </article> <hr class="my-8 border-dashed"> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/nginx 配置记录.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8"> <li> <a href="/tags/终端/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-2"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 终端 </a> </li><li> <a href="/tags/nginx/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-3"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> nginx </a> </li> </ul> <div id="btt-btn-container" class="fixed end-4 bottom-8 z-50 md:sticky md:end-auto md:float-end md:me-1 translate-y-14 opacity-0 transition duration-500"> <button data-button="back-to-top" class="group relative bg-background px-2 py-1 size-14 rounded-full shadow-xl md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg"> <span id="progress-indicator" class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"></span> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block rotate-90 md:hidden"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg> <span class="sr-only text-sm group-hover:text-accent md:not-sr-only"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M16 9l-4 -4" /><path d="M8 9l4 -4" /></svg>
+Back To Top
+</span> </button> </div> <script data-astro-rerun>
+  /** Scrolls the document to the top when
+   * the "Back to Top" button is clicked. */
+  function backToTop() {
+    const rootElement = document.documentElement;
+    const btnContainer = document.querySelector("#btt-btn-container");
+    const backToTopBtn = document.querySelector("[data-button='back-to-top']");
+    const progressIndicator = document.querySelector("#progress-indicator");
+
+    if (!rootElement || !btnContainer || !backToTopBtn || !progressIndicator)
+      return;
+
+    // Attach click event handler for back-to-top button
+    backToTopBtn.addEventListener("click", () => {
+      document.body.scrollTop = 0; // For Safari
+      document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+    });
+
+    // Handle button visibility according to scroll position
+    let lastVisible = null;
+    function handleScroll() {
+      const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
+      const scrollTop = rootElement.scrollTop;
+      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+
+      progressIndicator.style.setProperty(
+        "background-image",
+        `conic-gradient(var(--accent), var(--accent) ${scrollPercent}%, transparent ${scrollPercent}%)`
+      );
+
+      const isVisible = scrollTop / scrollTotal > 0.3;
+
+      if (isVisible !== lastVisible) {
+        btnContainer.classList.toggle("opacity-100", isVisible);
+        btnContainer.classList.toggle("translate-y-0", isVisible);
+        btnContainer.classList.toggle("opacity-0", !isVisible);
+        btnContainer.classList.toggle("translate-y-14", !isVisible);
+        lastVisible = isVisible;
+      }
+    }
+
+    let ticking = false;
+    document.addEventListener("scroll", () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+  backToTop();
+</script> <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start"><span class="italic">Share this post on:</span><div class="text-center"><a href="mailto:?subject=See%20this%20post&#38;body=https://henuhaigang.github.io/posts/nginx-%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/" title="Share this post via email" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg><span class="sr-only">Share this post via email</span> </a></div></div> <hr class="my-6 border-dashed"> <!-- Previous/Next Post Buttons --> <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">  <a href="/posts/20260831-系统挂掉排查2" class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"> <div> <span>Next Post</span> <div class="text-sm text-accent/85">进程挂掉排查方案2</div> </div> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block flex-none rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg> </a> </div> </main> <footer class="app-layout mt-auto"> <div class="py-6 sm:py-4 border-t border-border flex flex-col items-center justify-between sm:flex-row-reverse"> <div class="flex flex-wrap items-center gap-1"> <a href="https://github.com/henuhaigang" title="scorpion's blog on GitHub" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg> <span class="sr-only">scorpion&#39;s blog on GitHub</span>  </a><a href="mailto:guangzhinew@gmail.com" title="Send an email to scorpion's blog" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg> <span class="sr-only">Send an email to scorpion&#39;s blog</span>  </a> </div> <div class="my-2 flex flex-col items-center whitespace-nowrap sm:flex-row"> <span>Copyright &#169; 2026</span> <span class="hidden sm:inline">&nbsp;|&nbsp;</span> <span>All rights reserved.</span> </div> </div> </footer>  </body></html> <script data-astro-rerun>
+  /** Create a progress indicator
+   *  at the top */
+  function createProgressBar() {
+    // Create the main container div
+    const progressContainer = document.createElement("div");
+    progressContainer.className =
+      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+
+    // Create the progress bar div
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    progressBar.id = "myBar";
+
+    // Append the progress bar to the progress container
+    progressContainer.appendChild(progressBar);
+
+    // Append the progress container to the document body or any other desired parent element
+    document.body.appendChild(progressContainer);
+  }
+  createProgressBar();
+
+  /** Update the progress bar
+   *  when user scrolls */
+  function updateScrollProgress() {
+    document.addEventListener("scroll", () => {
+      const winScroll =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const height =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      if (document) {
+        const myBar = document.getElementById("myBar");
+        if (myBar) {
+          myBar.style.width = scrolled + "%";
+        }
+      }
+    });
+  }
+  updateScrollProgress();
+
+  /** Attaches links to headings in the document,
+   *  allowing sharing of sections easily */
+  function addHeadingLinks() {
+    const headings = Array.from(
+      document.querySelectorAll("h2, h3, h4, h5, h6")
+    );
+    for (const heading of headings) {
+      heading.classList.add("group");
+      const link = document.createElement("a");
+      link.className =
+        "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+      link.href = "#" + heading.id;
+
+      const span = document.createElement("span");
+      span.ariaHidden = "true";
+      span.innerText = "#";
+      link.appendChild(span);
+      heading.appendChild(link);
+    }
+  }
+  addHeadingLinks();
+
+  /** Attaches copy buttons to code blocks in the document,
+   * allowing users to copy code easily. */
+  function attachCopyButtons() {
+    const copyButtonLabel = "Copy";
+    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+
+    for (const codeBlock of codeBlocks) {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+
+      // Check if --file-name-offset custom property exists
+      const computedStyle = getComputedStyle(codeBlock);
+      const hasFileNameOffset =
+        computedStyle.getPropertyValue("--file-name-offset").trim() !== "";
+
+      // Determine the top positioning class
+      const topClass = hasFileNameOffset
+        ? "top-(--file-name-offset)"
+        : "-top-3";
+
+      const copyButton = document.createElement("button");
+      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+      copyButton.innerHTML = copyButtonLabel;
+      codeBlock.setAttribute("tabindex", "0");
+      codeBlock.appendChild(copyButton);
+
+      // wrap codebock with relative parent element
+      codeBlock?.parentNode?.insertBefore(wrapper, codeBlock);
+      wrapper.appendChild(codeBlock);
+
+      copyButton.addEventListener("click", async () => {
+        await copyCode(codeBlock, copyButton);
+      });
+    }
+
+    async function copyCode(block, button) {
+      const code = block.querySelector("code");
+      const text = code?.innerText;
+
+      await navigator.clipboard.writeText(text ?? "");
+
+      // visual feedback that task is completed
+      button.innerText = "Copied";
+
+      setTimeout(() => {
+        button.innerText = copyButtonLabel;
+      }, 700);
+    }
+  }
+  attachCopyButtons();
+
+  /* Go to page start after page swap */
+  document.addEventListener("astro:after-swap", () =>
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+  );
+</script>
