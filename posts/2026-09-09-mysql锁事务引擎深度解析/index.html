@@ -1,0 +1,1242 @@
+<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="canonical" href="https://henuhaigang.github.io/posts/2026-09-09-mysql%E9%94%81%E4%BA%8B%E5%8A%A1%E5%BC%95%E6%93%8E%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/"><meta name="generator" content="Astro v5.16.6"><!-- General Meta Tags --><title>MySQL 锁、事务、引擎深度解析：从 InnoDB 架构到线上死锁排查实战 | scorpion&#39;s blog</title><meta name="title" content="MySQL 锁、事务、引擎深度解析：从 InnoDB 架构到线上死锁排查实战 | scorpion's blog"><meta name="description" content="12年 DBA 视角深度剖析 MySQL InnoDB 锁体系、MVCC 实现、事务隔离级别、死锁原理与排查、引擎选型、线上典型事故案例，附核心源码逻辑与最佳实践"><meta name="author" content="henuhaigang"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="MySQL 锁、事务、引擎深度解析：从 InnoDB 架构到线上死锁排查实战 | scorpion's blog"><meta property="og:description" content="12年 DBA 视角深度剖析 MySQL InnoDB 锁体系、MVCC 实现、事务隔离级别、死锁原理与排查、引擎选型、线上典型事故案例，附核心源码逻辑与最佳实践"><meta property="og:url" content="https://henuhaigang.github.io/posts/2026-09-09-mysql%E9%94%81%E4%BA%8B%E5%8A%A1%E5%BC%95%E6%93%8E%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/"><meta property="og:image" content="https://henuhaigang.github.io/posts/2026-09-09-mysql%E9%94%81%E4%BA%8B%E5%8A%A1%E5%BC%95%E6%93%8E%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/index.png"><!-- Article Published/Modified time --><meta property="article:published_time" content="2026-09-09T14:00:00.000Z"><meta property="article:modified_time" content="2026-09-09T14:00:00.000Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://henuhaigang.github.io/posts/2026-09-09-mysql%E9%94%81%E4%BA%8B%E5%8A%A1%E5%BC%95%E6%93%8E%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/"><meta property="twitter:title" content="MySQL 锁、事务、引擎深度解析：从 InnoDB 架构到线上死锁排查实战 | scorpion's blog"><meta property="twitter:description" content="12年 DBA 视角深度剖析 MySQL InnoDB 锁体系、MVCC 实现、事务隔离级别、死锁原理与排查、引擎选型、线上典型事故案例，附核心源码逻辑与最佳实践"><meta property="twitter:image" content="https://henuhaigang.github.io/posts/2026-09-09-mysql%E9%94%81%E4%BA%8B%E5%8A%A1%E5%BC%95%E6%93%8E%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/index.png"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"MySQL 锁、事务、引擎深度解析：从 InnoDB 架构到线上死锁排查实战 | scorpion's blog","image":"https://henuhaigang.github.io/posts/2026-09-09-mysql%E9%94%81%E4%BA%8B%E5%8A%A1%E5%BC%95%E6%93%8E%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/index.png","datePublished":"2026-09-09T14:00:00.000Z","dateModified":"2026-09-09T14:00:00.000Z","author":[{"@type":"Person","name":"henuhaigang","url":"https://github.com/henuhaigang"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="scorpion's blog" href="https://henuhaigang.github.io/rss.xml"><meta name="theme-color" content=""><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.QW52Ox2j.js"></script><script src="/toggle-theme.js"></script><link rel="stylesheet" href="/_astro/about.BVNVd-UD.css">
+<style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media(prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
+:where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
+</style><style>[data-astro-transition-scope="astro-fam6wyqg-1"] { view-transition-name: my-sql-\9501\3001\4E8B\52A1\3001\5F15\64CE\6DF1\5EA6\89E3\6790\FF1A\4ECE-inno-db-\67B6\6784\5230\7EBF\4E0A\6B7B\9501\6392\67E5\5B9E\6218; }@layer astro { ::view-transition-old(my-sql-\9501\3001\4E8B\52A1\3001\5F15\64CE\6DF1\5EA6\89E3\6790\FF1A\4ECE-inno-db-\67B6\6784\5230\7EBF\4E0A\6B7B\9501\6392\67E5\5B9E\6218) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(my-sql-\9501\3001\4E8B\52A1\3001\5F15\64CE\6DF1\5EA6\89E3\6790\FF1A\4ECE-inno-db-\67B6\6784\5230\7EBF\4E0A\6B7B\9501\6392\67E5\5B9E\6218) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(my-sql-\9501\3001\4E8B\52A1\3001\5F15\64CE\6DF1\5EA6\89E3\6790\FF1A\4ECE-inno-db-\67B6\6784\5230\7EBF\4E0A\6B7B\9501\6392\67E5\5B9E\6218) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(my-sql-\9501\3001\4E8B\52A1\3001\5F15\64CE\6DF1\5EA6\89E3\6790\FF1A\4ECE-inno-db-\67B6\6784\5230\7EBF\4E0A\6B7B\9501\6392\67E5\5B9E\6218) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-2"] { view-transition-name: my-sql; }@layer astro { ::view-transition-old(my-sql) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(my-sql) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(my-sql) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(my-sql) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-3"] { view-transition-name: inno-db; }@layer astro { ::view-transition-old(inno-db) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(inno-db) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(inno-db) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(inno-db) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-4"] { view-transition-name: \9501; }@layer astro { ::view-transition-old(\9501) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(\9501) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(\9501) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(\9501) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-5"] { view-transition-name: \4E8B\52A1; }@layer astro { ::view-transition-old(\4E8B\52A1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(\4E8B\52A1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(\4E8B\52A1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(\4E8B\52A1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-5"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-5"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-5"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-5"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-5"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-5"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-5"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-5"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-6"] { view-transition-name: mvcc; }@layer astro { ::view-transition-old(mvcc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(mvcc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(mvcc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(mvcc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-6"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-6"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-6"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-6"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-6"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-6"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-6"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-6"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-7"] { view-transition-name: \6B7B\9501; }@layer astro { ::view-transition-old(\6B7B\9501) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(\6B7B\9501) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(\6B7B\9501) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(\6B7B\9501) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-7"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-7"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-7"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-7"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-7"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-7"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-7"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-7"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-8"] { view-transition-name: \6027\80FD\4F18\5316; }@layer astro { ::view-transition-old(\6027\80FD\4F18\5316) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(\6027\80FD\4F18\5316) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(\6027\80FD\4F18\5316) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(\6027\80FD\4F18\5316) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-8"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-8"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-8"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-8"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-8"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-8"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-8"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-8"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style></head> <body data-astro-cid-sckkx6r4>  <a id="skip-to-content" href="#main-content" class="absolute start-16 -top-full z-50 bg-background px-3 py-2 text-accent backdrop-blur-lg transition-all focus:top-4">
+Skip to content
+</a> <header class="app-layout flex flex-col items-center justify-between sm:flex-row"> <div id="top-nav-wrap" class="py-4 sm:py-6 border-b border-border relative w-full bg-background flex items-baseline justify-between sm:items-center"> <a href="/" class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"> scorpion&#39;s blog </a> <nav id="nav-menu" class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"> <button id="menu-btn" class="focus-outline self-end p-2 sm:hidden" aria-label="Open Menu" aria-expanded="false" aria-controls="menu-items"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden" id="close-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-menu-deep" id="menu-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6h16" /><path d="M7 12h13" /><path d="M10 18h10" /></svg> </button> <ul id="menu-items" class="mt-4 grid w-44 grid-cols-2 place-content-center gap-2 [&#38;>li>a]:block [&#38;>li>a]:px-4 [&#38;>li>a]:py-3 [&#38;>li>a]:text-center [&#38;>li>a]:font-medium [&#38;>li>a]:hover:text-accent sm:[&#38;>li>a]:px-2 sm:[&#38;>li>a]:py-1 hidden sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0"> <li class="col-span-2"> <a href="/posts" class="active-nav">
+Posts
+</a> </li> <li class="col-span-2"> <a href="/tags">
+Tags
+</a> </li> <li class="col-span-2"> <a href="/about">
+About
+</a> </li> <li class="col-span-2"> <a href="/archives" title="Archives" aria-label="archives" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex justify-center p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden sm:inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" /><path d="M10 12l4 0" /></svg> <span class="sm:sr-only">Archives</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <a href="/search" title="Search" aria-label="search" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg> <span class="sr-only">Search</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <button id="theme-btn" class="focus-outline relative size-12 p-4 sm:size-8 hover:[&>svg]:stroke-accent" title="Toggles light & dark" aria-label="auto" aria-live="polite"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg> </button> </li> </ul> </nav> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <div class="app-layout flex items-center justify-start"><a id="back-button" href="/" class="group inline-flex items-center gap-1 hover:text-accent focus-outline -ms-2 mt-8 mb-2 hover:text-foreground/75"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg><span>Go back</span> </a></div><script type="module">function o(){const t=document.querySelector("#back-button"),e=sessionStorage.getItem("backUrl");e&&t&&(t.href=e)}document.addEventListener("astro:page-load",o);o();</script> <main id="main-content" class="app-layout pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl" data-astro-transition-scope="astro-fam6wyqg-1"> MySQL 锁、事务、引擎深度解析：从 InnoDB 架构到线上死锁排查实战 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2026-09-09T14:00:00.000Z">9 Sep, 2026</time> </div> <span aria-hidden="true" class="max-sm:hidden">|</span> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/2026-09-09-MySQL锁事务引擎深度解析.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent max-sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> </div> <article id="article" class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <h1 id="mysql-锁事务引擎深度解析">MySQL 锁、事务、引擎深度解析</h1>
+<blockquote>
+<p><strong>核心认知</strong>：MySQL 的「锁」不是单一概念，而是 <strong>全局锁 → 表锁 → 行锁 → 意向锁 → 间隙锁 → Next-Key Lock</strong> 的层级防御体系；MVCC 不是魔法，是 <strong>Undo Log + ReadView + 隐式主键</strong> 的精密协作；死锁不是bug，是高并发下的必然概率事件，关键是「如何快速发现、如何优雅恢复」。</p>
+</blockquote>
+<hr>
+<h2 id="一innodb-架构与锁体系全景图">一、InnoDB 架构与锁体系全景图</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>┌─────────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>                        MySQL Server Layer</span></span>
+<span class="line"><span>├─────────────────────────────────────────────────────────────────┤</span></span>
+<span class="line"><span>  Connection Pool  →  Parser  →  Optimizer  →  Executor</span></span>
+<span class="line"><span>                                                          │</span></span>
+<span class="line"><span>                                                          ▼</span></span>
+<span class="line"><span>┌─────────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>                        InnoDB Storage Engine</span></span>
+<span class="line"><span>├─────────────────────────────────────────────────────────────────┤</span></span>
+<span class="line"><span>  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐</span></span>
+<span class="line"><span>  │ Buffer Pool  │  │  Lock Sys    │  │  Log Sys     │</span></span>
+<span class="line"><span>  │ (LRU/Flush)  │◄─│ (行锁/表锁/  │◄─│ (Redo/Undo)  │</span></span>
+<span class="line"><span>  │              │  │  意向/间隙)  │  │              │</span></span>
+<span class="line"><span>  └──────────────┘  └──────────────┘  └──────────────┘</span></span>
+<span class="line"><span>        ▲                 ▲                 ▲</span></span>
+<span class="line"><span>        │                 │                 │</span></span>
+<span class="line"><span>  ┌─────┴─────┐   ┌───────┴───────┐  ┌──────┴──────┐</span></span>
+<span class="line"><span>  │ Data Page │   │ Lock Struct   │  │ Log Buffer  │</span></span>
+<span class="line"><span>  │ (B+Tree)  │   │ (Hash表+链表) │  │ (顺序写)    │</span></span>
+<span class="line"><span>  └───────────┘   └───────────────┘  └─────────────┘</span></span></code></pre>
+<h3 id="11-锁的层级与兼容性矩阵">1.1 锁的层级与兼容性矩阵</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>锁类型</th><th>粒度</th><th>作用范围</th><th>兼容性</th><th>典型场景</th></tr></thead><tbody><tr><td><strong>全局锁</strong></td><td>实例</td><td>全库</td><td>互斥</td><td><code>FLUSH TABLES WITH READ LOCK</code> 备份</td></tr><tr><td><strong>表锁</strong></td><td>表</td><td>整张表</td><td>互斥</td><td>DDL、全表扫描无索引</td></tr><tr><td><strong>意向锁</strong></td><td>表</td><td>标识行锁意图</td><td>IX/IS 兼容，X/S 互斥</td><td>行锁前置检查</td></tr><tr><td><strong>记录锁</strong></td><td>行</td><td>单行记录</td><td>X 互斥，S 兼容</td><td><code>WHERE id = 1</code> 命中唯一索引</td></tr><tr><td><strong>间隙锁</strong></td><td>间隙</td><td>索引间隙</td><td>兼容（不锁记录）</td><td><code>WHERE id > 10</code> 防止幻读</td></tr><tr><td><strong>Next-Key Lock</strong></td><td>行+间隙</td><td>记录+前间隙</td><td>X 互斥</td><td>RR 默认行锁升级</td></tr><tr><td><strong>插入意向锁</strong></td><td>间隙</td><td>插入前间隙</td><td>与间隙锁冲突</td><td><code>INSERT</code> 前置检查</td></tr></tbody></table>
+<p><strong>兼容性矩阵</strong>（✓兼容 ✗冲突）：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>请求\持有</th><th>X (排他)</th><th>S (共享)</th><th>IX</th><th>IS</th><th>Gap</th><th>Next-Key</th><th>Insert Intention</th></tr></thead><tbody><tr><td><strong>X</strong></td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr><tr><td><strong>S</strong></td><td>✗</td><td>✓</td><td>✗</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr><tr><td><strong>IX</strong></td><td>✗</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr><tr><td><strong>IS</strong></td><td>✗</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr><tr><td><strong>Gap</strong></td><td>✗</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr><tr><td><strong>Next-Key</strong></td><td>✗</td><td>✗</td><td>✗</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr><tr><td><strong>Insert Int</strong></td><td>✗</td><td>✗</td><td>✗</td><td>✓</td><td>✗</td><td>✗</td><td>✓</td></tr></tbody></table>
+<blockquote>
+<p><strong>记忆口诀</strong>：X 与所有冲突；S 只与 X 冲突；IX/IS 只与 X/S 冲突；Gap 只与 X/Next-Key/Insert Intention 冲突；Insert Intention 只与 Gap/Next-Key 冲突。</p>
+</blockquote>
+<hr>
+<h2 id="二行锁实现原理从索引到-lock-struct">二、行锁实现原理：从索引到 Lock Struct</h2>
+<h3 id="21-核心数据结构">2.1 核心数据结构</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="cpp"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// InnoDB 锁结构 (简化自 lock0lock.h)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">struct</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D6DEEB"> lock_t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    trx_t</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">      trx;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">              // 所属事务</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    dict_index_t</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> index;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">          // 所属索引</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    lock_mode_t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> mode;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">             // LOCK_X | LOCK_S | LOCK_GAP | LOCK_ORDINARY | LOCK_INSERT_INTENTION</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    lock_type_t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> type;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">             // LOCK_REC | LOCK_TABLE</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    ulint       hash;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">             // Hash 值 (space_id + page_no + n_bits)</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    bitmap_t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    bitmap;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">           // 位图：每 bit 对应一条记录 (heap_no)</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 链表指针</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    lock_t</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">     trx_locks_next;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">   // 事务锁链表</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    lock_t</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">     trx_locks_prev;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 记录锁位图映射：heap_no -> bit</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// heap_no: 页内记录偏移 (从 0 开始，0=infimum, 1=supremum, 2+=用户记录)</span></span></code></pre>
+<h3 id="22-行锁加锁流程源码逻辑">2.2 行锁加锁流程源码逻辑</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="cpp"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// row0sel.cc: row_search_for_mysql() -> 行锁加锁入口</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 核心函数：lock_rec_lock()</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">bool</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> lock_rec_lock</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    lock_mode_t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> mode</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">        // 锁模式</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    dict_index_t</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> index</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">     // 索引</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    const</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D6DEEB"> ulint</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> rec</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">        // 记录指针</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    lock_type_t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> type</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">        // LOCK_REC</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    trx_t</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> trx</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">              // 事务</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#D6DEEB">    ulint</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> n_bits</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">             // 位图长度</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 1. 计算 hash，定位 Lock Sys Hash 表桶</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    ulint hash </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> lock_rec_hash</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(space_id</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> page_no</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> n_bits);</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    </span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 2. 遍历桶内链表，查找是否已有同页锁对象</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    for</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">lock_t</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> lock </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> HASH_GET</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(list</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> hash); lock; lock </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> lock</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">-></span><span style="--shiki-light:#24292EFF;--shiki-dark:#BAEBE2">hash_next</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">lock</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">-></span><span style="--shiki-light:#24292EFF;--shiki-dark:#BAEBE2">index</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> ==</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> index </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">&#x26;&#x26;</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> lock</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">-></span><span style="--shiki-light:#24292EFF;--shiki-dark:#BAEBE2">space</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> ==</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> space_id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">&#x26;&#x26;</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> lock</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">-></span><span style="--shiki-light:#24292EFF;--shiki-dark:#BAEBE2">page_no</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> ==</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> page_no) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">            // 3. 找到现有锁对象，设置对应 heap_no 的 bit</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">            lock_rec_add_to_queue</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(lock</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> mode</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> heap_no);</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">            return</span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF"> true</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">  // 成功</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    </span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 4. 未找到，创建新 lock_t，分配 bitmap，设置 bit</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    lock_t</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> lock </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> lock_create</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(...);</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">    lock_rec_add_to_queue</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(lock</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> mode</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> heap_no);</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    </span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 5. 插入 Hash 表 &#x26; 事务锁链表</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">    HASH_INSERT</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(list</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> hash</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> lock);</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">    trx_lock_add</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(lock</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> trx);</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    </span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    return</span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF"> true</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<h3 id="23-关键点heap_no-与位图">2.3 关键点：heap_no 与位图</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="text"><code><span class="line"><span>数据页结构 (16KB)：</span></span>
+<span class="line"><span>┌─────────────────────────────────────┐</span></span>
+<span class="line"><span>│ Page Header (56 bytes)              │</span></span>
+<span class="line"><span>├─────────────────────────────────────┤</span></span>
+<span class="line"><span>│ Infimum Record (heap_no=0)          │  系统最小记录</span></span>
+<span class="line"><span>├─────────────────────────────────────┤</span></span>
+<span class="line"><span>│ User Record 1 (heap_no=2)           │  实际数据</span></span>
+<span class="line"><span>├─────────────────────────────────────┤</span></span>
+<span class="line"><span>│ User Record 2 (heap_no=3)           │</span></span>
+<span class="line"><span>├─────────────────────────────────────┤</span></span>
+<span class="line"><span>│ ...                                 │</span></span>
+<span class="line"><span>├─────────────────────────────────────┤</span></span>
+<span class="line"><span>│ Supremum Record (heap_no=1)         │  系统最大记录</span></span>
+<span class="line"><span>├─────────────────────────────────────┤</span></span>
+<span class="line"><span>│ Page Directory (稀疏索引)           │</span></span>
+<span class="line"><span>├─────────────────────────────────────┤</span></span>
+<span class="line"><span>│ Free Space                          │</span></span>
+<span class="line"><span>└─────────────────────────────────────┘</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Lock Bitmap (每 bit 对应一个 heap_no)：</span></span>
+<span class="line"><span>bit 0: Infimum  (间隙锁左边界)</span></span>
+<span class="line"><span>bit 1: Supremum (间隙锁右边界)</span></span>
+<span class="line"><span>bit 2: Record 1</span></span>
+<span class="line"><span>bit 3: Record 2</span></span>
+<span class="line"><span>...</span></span></code></pre>
+<p><strong>Next-Key Lock 本质</strong>：锁住 <strong>记录本身 + 记录前的间隙</strong></p>
+<ul>
+<li>对应 bitmap：<code>bit[heap_no]</code> (记录) + <code>bit[heap_no-1]</code> (前间隙)</li>
+</ul>
+<hr>
+<h2 id="三mvcc-多版本并发控制读不加锁的秘密">三、MVCC 多版本并发控制：读不加锁的秘密</h2>
+<h3 id="31-核心组件">3.1 核心组件</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>MVCC 核心三件套：</span></span>
+<span class="line"><span>┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐</span></span>
+<span class="line"><span>│  Undo Log       │  │  ReadView       │  │  Hidden Columns │</span></span>
+<span class="line"><span>│  (版本链)       │  │  (可见性判断)   │  │  (DB_TRX_ID,    │</span></span>
+<span class="line"><span>│                 │  │                 │  │   DB_ROLL_PTR)  │</span></span>
+<span class="line"><span>└─────────────────┘  └─────────────────┘  └─────────────────┘</span></span></code></pre>
+<h3 id="32-隐式列与版本链">3.2 隐式列与版本链</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 每行记录隐藏列 (不显示在 SHOW CREATE TABLE)</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 可通过 SELECT * FROM information_schema.innodb_sys_tables 间接验证</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">CREATE</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> TABLE</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">INT</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> PRIMARY KEY</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">,</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">    name</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> VARCHAR</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">20</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">)</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 物理存储实际包含：</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- DB_ROW_ID      (6 bytes)  隐式主键 (无主键时)</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- DB_TRX_ID      (6 bytes)  最后修改事务 ID</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- DB_ROLL_PTR    (7 bytes)  指向 Undo Log 的指针</span></span></code></pre>
+<p><strong>版本链演示</strong>：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 初始</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">INSERT INTO</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">VALUES</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">, </span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">Alice</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">);  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- trx_id=100</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 更新 1</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SET</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> name=</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">Bob</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- trx_id=200</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 更新 2</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SET</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> name=</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">Charlie</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- trx_id=300</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 版本链 (最新在前)：</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">/*</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">Record (name='Charlie') </span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">  DB_TRX_ID=300, DB_ROLL_PTR=0x7f...  ───►</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">Undo Log (name='Bob')    </span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">  DB_TRX_ID=200, DB_ROLL_PTR=0x7f...  ───►</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">Undo Log (name='Alice')  </span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">  DB_TRX_ID=100, DB_ROLL_PTR=NULL</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">*/</span></span></code></pre>
+<h3 id="33-readview-可见性判断算法">3.3 ReadView 可见性判断算法</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="cpp"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 源码: read0read.cc: read_view_sees_trx_id()</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// ReadView 结构</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">struct</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D6DEEB"> ReadView</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    trx_id_t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">   low_limit_id;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 活跃事务最小 ID (未提交最小)</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    trx_id_t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">   up_limit_id;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">     // 已提交最大 ID + 1 (高水位)</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    trx_id_t</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">  trx_ids;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">         // 活跃事务 ID 列表 (排序)</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    ulint      n_trx_ids;</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    trx_id_t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">   creator_trx_id;</span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">  // 创建者事务 ID</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 可见性判断核心逻辑</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">bool</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> trx_id_is_visible</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">trx_id_t</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> trx_id</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D6DEEB"> ReadView</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">*</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> view</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 1. 自己修改的，可见</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (trx_id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">==</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> view</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">-></span><span style="--shiki-light:#24292EFF;--shiki-dark:#BAEBE2">creator_trx_id</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) </span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">return</span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF"> true</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    </span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 2. 比已提交最大还小，可见</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (trx_id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">&#x3C;</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> view</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">-></span><span style="--shiki-light:#24292EFF;--shiki-dark:#BAEBE2">up_limit_id</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) </span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">return</span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF"> true</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    </span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 3. 比活跃最小还大，不可见 (未提交)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (trx_id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">>=</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> view</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">-></span><span style="--shiki-light:#24292EFF;--shiki-dark:#BAEBE2">low_limit_id</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) </span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">return</span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF"> false</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    </span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 4. 在活跃列表中，不可见 (未提交)</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 二分查找 trx_ids 数组</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">binary_search</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">view</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">-></span><span style="--shiki-light:#24292EFF;--shiki-dark:#BAEBE2">trx_ids</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> view</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">-></span><span style="--shiki-light:#24292EFF;--shiki-dark:#BAEBE2">n_trx_ids</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> trx_id)) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        return</span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF"> false</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    </span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 5. 不在活跃列表，且 &#x3C; low_limit_id，可见 (已提交)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    return</span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF"> true</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<h3 id="34-rc-vs-rr-隔离级别的-readview-生命周期">3.4 RC vs RR 隔离级别的 ReadView 生命周期</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>隔离级别</th><th>ReadView 创建时机</th><th>可见性差异</th></tr></thead><tbody><tr><td><strong>READ COMMITTED (RC)</strong></td><td><strong>每个 SELECT 语句开始</strong></td><td>每次查询看到最新已提交数据，可能不可重复读</td></tr><tr><td><strong>REPEATABLE READ (RR)</strong></td><td><strong>事务第一个 SELECT</strong></td><td>事务内所有 SELECT 共享同一 ReadView，可重复读</td></tr></tbody></table>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- RC 场景：不可重复读</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 事务 A                    -- 事务 B</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">START TRANSACTION</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;           </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">START TRANSACTION</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 'Alice'</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">                             UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SET</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> name=</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">Bob</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">                             COMMIT</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 'Bob' (RC: 不同！RR: 仍是 'Alice')</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">COMMIT</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<h3 id="35-mvcc-与锁的配合一致性非锁定读-vs-锁定读">3.5 MVCC 与锁的配合：一致性非锁定读 vs 锁定读</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 一致性非锁定读 (普通 SELECT) - MVCC，不加锁</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 锁定读 (显式加锁)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> LOCK </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">IN</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> SHARE MODE;      </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- S 锁 (RC/RR: 记录锁)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 1</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FOR</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;              </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- X 锁 (RC/RR: 记录锁)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 1</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FOR</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> UPDATE</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> SKIP</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> LOCKED;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 跳过已锁行 (JDK 8+)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 1</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FOR</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> UPDATE</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> NOWAIT</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;       </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 立即失败不等待 (JDK 8+)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 1</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FOR</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> SHARE </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SKIP</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> LOCKED;   </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- S 锁跳过</span></span></code></pre>
+<hr>
+<h2 id="四事务隔离级别与实现差异">四、事务隔离级别与实现差异</h2>
+<h3 id="41-四大隔离级别对比">4.1 四大隔离级别对比</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>隔离级别</th><th>脏读</th><th>不可重复读</th><th>幻读</th><th>InnoDB 实现</th></tr></thead><tbody><tr><td><strong>READ UNCOMMITTED</strong></td><td>✓</td><td>✓</td><td>✓</td><td>直接读最新版本，无 ReadView</td></tr><tr><td><strong>READ COMMITTED</strong></td><td>✗</td><td>✓</td><td>✓</td><td>每次 SELECT 生成 ReadView</td></tr><tr><td><strong>REPEATABLE READ</strong></td><td>✗</td><td>✗</td><td>✗*</td><td>事务首次 SELECT 生成 ReadView + Next-Key Lock</td></tr><tr><td><strong>SERIALIZABLE</strong></td><td>✗</td><td>✗</td><td>✗</td><td>读加 S 锁，写加 X 锁，串行化</td></tr></tbody></table>
+<blockquote>
+<p>*InnoDB RR 通过 <strong>Next-Key Lock</strong> 解决幻读，但<strong>不完全等同于串行化</strong>（如范围查询+插入仍可能并发）。</p>
+</blockquote>
+<h3 id="42-幻读在-rr-下的解决next-key-lock">4.2 幻读在 RR 下的解决：Next-Key Lock</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 事务 A (RR)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">START TRANSACTION</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">></span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 10</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FOR</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 加 Next-Key Lock</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 锁住：(10, +∞) 间隙 + 所有 id>10 的记录</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 事务 B</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">INSERT INTO</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">VALUES</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">15</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">, </span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">x</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">);  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 阻塞！等待间隙锁释放</span></span></code></pre>
+<p><strong>Next-Key Lock 加锁规则（RR 默认）</strong>：</p>
+<ol>
+<li>唯一索引等值查询 → <strong>Record Lock</strong> (退化)</li>
+<li>唯一索引范围查询 → <strong>Next-Key Lock</strong></li>
+<li>非唯一索引等值查询 → <strong>Next-Key Lock</strong></li>
+<li>非唯一索引范围查询 → <strong>Next-Key Lock</strong></li>
+<li>无索引全表扫描 → <strong>表锁</strong> (退化，性能灾难)</li>
+</ol>
+<hr>
+<h2 id="五死锁原理复现排查预防">五、死锁：原理、复现、排查、预防</h2>
+<h3 id="51-死锁必要条件coffman-条件">5.1 死锁必要条件（Coffman 条件）</h3>
+<ol>
+<li><strong>互斥</strong>：资源独占</li>
+<li><strong>持有并等待</strong>：持有锁等待新锁</li>
+<li><strong>不可抢占</strong>：锁只能主动释放</li>
+<li><strong>循环等待</strong>：环形等待链</li>
+</ol>
+<h3 id="52-经典死锁复现两事务反向更新">5.2 经典死锁复现：两事务反向更新</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 表结构</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">CREATE</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> TABLE</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> account</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">INT</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> PRIMARY KEY</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">,</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    balance </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">DECIMAL</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">10</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">2</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">)</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">);</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">INSERT INTO</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> account </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">VALUES</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">, </span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">100</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">), (</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">2</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">, </span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">100</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 事务 A                        -- 事务 B</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">START TRANSACTION</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;               </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">START TRANSACTION</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> account </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SET</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> balance</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">balance</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">-</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">10</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 锁 id=1</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">                                    UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> account </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SET</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> balance</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">balance</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">-</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">10</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">2</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 锁 id=2</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> account </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SET</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> balance</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">balance</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">+</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">10</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">2</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 等待 id=2 (B持有)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">                                    UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> account </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SET</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> balance</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">balance</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">+</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">10</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 等待 id=1 (A持有)</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- DEADLOCK!                      -- DEADLOCK!</span></span></code></pre>
+<p><strong>死锁日志解读</strong> (<code>SHOW ENGINE INNODB STATUS</code>)：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>------------------------</span></span>
+<span class="line"><span>LATEST DETECTED DEADLOCK</span></span>
+<span class="line"><span>------------------------</span></span>
+<span class="line"><span>2026-09-09 14:30:15 0x7f8b1c00</span></span>
+<span class="line"><span>*** (1) TRANSACTION:</span></span>
+<span class="line"><span>TRANSACTION 12345, ACTIVE 0.001 sec</span></span>
+<span class="line"><span>2 lock struct(s), heap size 1136, 1 row lock(s)</span></span>
+<span class="line"><span>MySQL thread id 10, OS thread handle 14023, query id 100 localhost root</span></span>
+<span class="line"><span>UPDATE account SET balance=balance+10 WHERE id=2</span></span>
+<span class="line"><span>*** (1) WAITING FOR THIS LOCK TO BE GRANTED:</span></span>
+<span class="line"><span>RECORD LOCKS space id 5 page no 3 n bits 72 index PRIMARY of `test`.`account`</span></span>
+<span class="line"><span>trx id 12345 lock_mode X locks rec but not gap waiting</span></span>
+<span class="line"><span>Record lock, heap no 3</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>*** (2) TRANSACTION:</span></span>
+<span class="line"><span>TRANSACTION 12346, ACTIVE 0.001 sec</span></span>
+<span class="line"><span>2 lock struct(s), heap size 1136, 1 row lock(s)</span></span>
+<span class="line"><span>MySQL thread id 11, OS thread handle 14024, query id 101 localhost root</span></span>
+<span class="line"><span>UPDATE account SET balance=balance+10 WHERE id=1</span></span>
+<span class="line"><span>*** (2) WAITING FOR THIS LOCK TO BE GRANTED:</span></span>
+<span class="line"><span>RECORD LOCKS space id 5 page no 3 n bits 72 index PRIMARY of `test`.`account`</span></span>
+<span class="line"><span>trx id 12346 lock_mode X locks rec but not gap waiting</span></span>
+<span class="line"><span>Record lock, heap no 2</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>*** WE ROLL BACK TRANSACTION (1)</span></span></code></pre>
+<h3 id="53-死锁检测机制">5.3 死锁检测机制</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="cpp"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// InnoDB 死锁检测：Wait-for Graph (等待图)</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 源码: lock0dead.cc</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 1. 事务等待锁时，构建等待边：Trx_A --waits for--> Trx_B</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 2. 定期/每次等待时 DFS 检测环</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 3. 发现环 → 选择代价最小的事务回滚 (权重：修改行数、锁数、undo量)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 关键配置：</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// innodb_deadlock_detect = ON (默认开启)</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// innodb_lock_wait_timeout = 50s (默认，超时回滚)</span></span></code></pre>
+<p><strong>Wait-for Graph 示例</strong>：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Trx_A (持有 id=1 锁) ───等待 id=2───► Trx_B (持有 id=2 锁)</span></span>
+<span class="line"><span>  ▲                                              │</span></span>
+<span class="line"><span>  │                                              ▼</span></span>
+<span class="line"><span>  └──────────等待 id=1──────────── Trx_B (持有 id=2 锁)</span></span>
+<span class="line"><span>  </span></span>
+<span class="line"><span>检测到环：Trx_A → Trx_B → Trx_A</span></span></code></pre>
+<h3 id="54-线上死锁排查-sop">5.4 线上死锁排查 SOP</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 1. 实时监控死锁</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 开启死锁记录到错误日志</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">innodb_print_all_deadlocks</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> =</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> ON</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 2. 定期收集</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">grep</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -i</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD"> "</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">deadlock</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> /var/log/mysql/error.log</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> |</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> tail</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -20</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 3. 实时查看当前锁等待</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">SELECT</span><span style="--shiki-light:#2B5581;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> FROM</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> performance_schema.data_lock_waits</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">SELECT</span><span style="--shiki-light:#2B5581;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> FROM</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> sys.innodb_lock_waits</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">--</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> 更友好视图</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 4. 关键信息提取</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - 死锁 SQL</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - 事务隔离级别</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - 索引情况 (EXPLAIN)</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - 并发量、频次</span></span></code></pre>
+<h3 id="55-死锁预防最佳实践">5.5 死锁预防最佳实践</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>策略</th><th>实施方式</th><th>适用场景</th></tr></thead><tbody><tr><td><strong>统一访问顺序</strong></td><td>业务代码按主键升序更新多行</td><td>批量更新、转账</td></tr><tr><td><strong>缩短事务</strong></td><td>少用 <code>SELECT ... FOR UPDATE</code>，拆分大事务</td><td>高并发核心链路</td></tr><tr><td><strong>合理索引</strong></td><td>避免无索引全表锁、间隙锁过大</td><td>所有写操作</td></tr><tr><td><strong>降低隔离级别</strong></td><td>RC + <code>binlog_format=ROW</code></td><td>允许不可重复读的业务</td></tr><tr><td><strong>重试机制</strong></td><td>捕获 <code>Lock wait timeout</code> / <code>Deadlock</code> 重试</td><td>幂等接口</td></tr><tr><td><strong>SKIP LOCKED</strong></td><td><code>SELECT ... FOR UPDATE SKIP LOCKED</code></td><td>队列、抢单场景</td></tr></tbody></table>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 代码级重试模板</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">@</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Retryable</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(</span><span style="--shiki-light:#24292EFF;--shiki-dark:#82AAFF">retryFor</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">CannotAcquireLockException</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">class</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> DeadlockLoserDataAccessException</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">class</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#82AAFF">           maxAttempts</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 3</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#82AAFF"> backoff</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> @</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Backoff</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">(</span><span style="--shiki-light:#24292EFF;--shiki-dark:#82AAFF">delay</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 10</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#82AAFF"> multiplier</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 2</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">))</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">@</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Transactional</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> transfer</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Long</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF"> from</span><span style="--shiki-light:#212121;--shiki-dark:#82AAFF">,</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> Long</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF"> to</span><span style="--shiki-light:#212121;--shiki-dark:#82AAFF">,</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> BigDecimal</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF"> amount</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 按 ID 升序加锁</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">    List</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">&#x3C;</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Account</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">> </span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478">accounts</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> accountMapper</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">selectByIdsOrderByIdAsc</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">List</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">of</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">from</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> to</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">))</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 业务逻辑...</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<hr>
+<h2 id="六innodb-核心参数调优指南">六、InnoDB 核心参数调优指南</h2>
+<h3 id="61-buffer-pool-最关键">6.1 Buffer Pool (最关键)</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="ini"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 内存 64GB 服务器建议</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_buffer_pool_size</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 48G        </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 物理内存 70-80%</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_buffer_pool_instances</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 8     </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 1GB/实例，减少竞争</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_buffer_pool_chunk_size</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 1G   </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 扩容单位</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_old_blocks_pct</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 37           </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># Young/Old 区比例</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_old_blocks_time</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 1000        </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 1秒内不晋升 Young (防全表扫描污染)</span></span></code></pre>
+<h3 id="62-redo-log-写性能核心">6.2 Redo Log (写性能核心)</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="ini"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_log_file_size</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 2G            </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 单文件大小 (总 4G)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_log_files_in_group</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 2</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_log_buffer_size</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 64M         </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 大事务增大</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_flush_log_at_trx_commit</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 1   </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 1=最安全，2=高性能(丢1秒), 0=最高性能(丢数据)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_flush_method</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> O_DIRECT       </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 绕过 OS Cache，防双缓存</span></span></code></pre>
+<h3 id="63-undo-log--purge">6.3 Undo Log &#x26; Purge</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="ini"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_undo_tablespaces</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 2          </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 独立 Undo 表空间 (便于回收)</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_max_undo_log_size</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 2G        </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 超过触发截断</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_purge_threads</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 4             </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># Purge 并行线程</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_purge_rseg_truncate_frequency</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 128</span></span></code></pre>
+<h3 id="64-锁与并发">6.4 锁与并发</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="ini"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_lock_wait_timeout</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 10        </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 降低等待时间，快速失败重试</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_deadlock_detect</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> ON          </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 必须开启</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">innodb_spin_wait_delay</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB"> =</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 6           </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 自旋等待 (高并发可调大)</span></span></code></pre>
+<hr>
+<h2 id="七引擎选型innodb-vs-myisam-vs-其他">七、引擎选型：InnoDB vs MyISAM vs 其他</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>场景</th><th>推荐引擎</th><th>理由</th></tr></thead><tbody><tr><td><strong>OLTP 核心业务</strong></td><td><strong>InnoDB</strong></td><td>事务、行锁、MVCC、崩溃恢复</td></tr><tr><td><strong>只读/日志/归档</strong></td><td>MyISAM / Archive</td><td>表锁、全文索引、压缩存储</td></tr><tr><td><strong>实时分析/OLAP</strong></td><td>ClickHouse / Doris / StarRocks</td><td>列存、向量化、MPP</td></tr><tr><td><strong>高并发计数器</strong></td><td>InnoDB + <code>innodb_thread_concurrency</code> / Redis</td><td>原子操作</td></tr><tr><td><strong>临时表/中间结果</strong></td><td>MEMORY / TempTable (MySQL 8+)</td><td>内存级速度</td></tr><tr><td><strong>全文搜索</strong></td><td>InnoDB (8.0+ 支持) / Elasticsearch</td><td>专业搜索引擎更强</td></tr></tbody></table>
+<hr>
+<h2 id="八线上典型事故案例复盘">八、线上典型事故案例复盘</h2>
+<h3 id="案例-1无索引-update-导致全表锁">案例 1：无索引 UPDATE 导致全表锁</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 事故 SQL</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> user </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SET</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> status=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> phone</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">13800000000</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- phone 无索引</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 现象：全库阻塞，所有写入等待</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 原因：无索引 → 全表扫描 → 每行加 Next-Key Lock → 退化表锁</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 解决：加索引 `idx_phone(phone)`</span></span></code></pre>
+<h3 id="案例-2大事务导致-undo-log-爆盘">案例 2：大事务导致 Undo Log 爆盘</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 事故：一次性删除 500 万行</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">DELETE</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> logs </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> create_time </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">&#x3C;</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD"> '</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">2025-01-01</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 后果：</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 1. Undo Log 暴涨 50GB+</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 2. Purge 线程跟不上，History List Length 飙升</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 3. 后续 SELECT 因遍历版本链极慢</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 4. 主从延迟严重</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 解决：分批删除 (每次 5000 行 + 间隔 sleep)</span></span></code></pre>
+<h3 id="案例-3隐式转换导致索引失效">案例 3：隐式转换导致索引失效</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 表：id VARCHAR(20) PRIMARY KEY</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 事故：</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 12345</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 字符串列比数字，隐式转换 CAST(id AS UNSIGNED)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 现象：全表扫描，锁全表</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 解决：WHERE id = '12345' 或 WHERE CAST(id AS CHAR) = '12345'</span></span></code></pre>
+<h3 id="案例-4gap-lock-导致插入死锁">案例 4：Gap Lock 导致插入死锁</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 事务 A</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">SELECT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> *</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FROM</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WHERE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> id </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">></span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 100</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> FOR</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> UPDATE</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 锁 (100, +∞)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 事务 B</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">INSERT INTO</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> t </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">VALUES</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">200</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">, </span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">x</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">);  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 等待 Gap Lock</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 事务 A 提交后，B 成功</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 但高并发下大量插入排队，RT 飙升</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">-- 优化：改用 RC 隔离级别 (无 Gap Lock) 或精确索引定位</span></span></code></pre>
+<hr>
+<h2 id="九mysql-80-新特性锁增强">九、MySQL 8.0 新特性锁增强</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>特性</th><th>说明</th><th>价值</th></tr></thead><tbody><tr><td><strong><code>NOWAIT</code> / <code>SKIP LOCKED</code></strong></td><td><code>FOR UPDATE NOWAIT</code> / <code>FOR UPDATE SKIP LOCKED</code></td><td>队列、抢单、分布式锁无阻塞</td></tr><tr><td><strong>即时加列</strong></td><td><code>ALTER TABLE ... ADD COLUMN ... INSTANT</code></td><td>元数据修改不锁表</td></tr><tr><td><strong>降序索引</strong></td><td><code>INDEX idx_desc (col DESC)</code></td><td>避免 filesort</td></tr><tr><td><strong>不可见索引</strong></td><td><code>ALTER TABLE ... ALTER INDEX ... INVISIBLE</code></td><td>验证索引效果无风险</td></tr><tr><td><strong>Histogram 统计</strong></td><td><code>ANALYZE TABLE ... UPDATE HISTOGRAM</code></td><td>优化器更准</td></tr><tr><td><strong>CTE / 窗口函数</strong></td><td><code>WITH RECURSIVE</code> / <code>ROW_NUMBER()</code></td><td>复杂查询简化</td></tr></tbody></table>
+<hr>
+<h2 id="十12-年经验总结mysql-锁事务避坑清单">十、12 年经验总结：MySQL 锁事务避坑清单</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>□ 所有表必须有显式主键 (推荐 BIGINT AUTO_INCREMENT)</span></span>
+<span class="line"><span>□ 所有 WHERE/JOIN/ORDER BY 列建立索引 (EXPLAIN 验证)</span></span>
+<span class="line"><span>□ 禁止 SELECT *，显式列出列名</span></span>
+<span class="line"><span>□ 事务尽可能短，不在事务中调用 RPC/HTTP</span></span>
+<span class="line"><span>□ 批量操作分批 (500-1000 行/批)</span></span>
+<span class="line"><span>□ 统一多表更新顺序 (按表名/主键排序)</span></span>
+<span class="line"><span>□ 显式指定隔离级别 (RC + ROW binlog 通用最优)</span></span>
+<span class="line"><span>□ 监控：Innodb_row_lock_waits, Innodb_deadlocks, History_list_length</span></span>
+<span class="line"><span>□ 开启 innodb_print_all_deadlocks = ON</span></span>
+<span class="line"><span>□ 定期 PURGE 大事务表 (pt-archiver / 分区表)</span></span>
+<span class="line"><span>□ 备库同步延迟监控 (Seconds_Behind_Master / GTID)</span></span>
+<span class="line"><span>□ 备份验证：定期恢复演练</span></span></code></pre>
+<hr>
+<h2 id="十一核心源码阅读路线图">十一、核心源码阅读路线图</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>1. 事务系统</span></span>
+<span class="line"><span>   trx0trx.cc: trx_t 结构、事务状态机、提交/回滚</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>2. 锁系统</span></span>
+<span class="line"><span>   lock0lock.cc: lock_t 结构、加锁/释放、死锁检测</span></span>
+<span class="line"><span>   lock0types.h: 锁模式位掩码定义</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>3. MVCC</span></span>
+<span class="line"><span>   read0read.cc: ReadView 创建、可见性判断、purge</span></span>
+<span class="line"><span>   undo0undo.cc: Undo Log 写入、版本链维护</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>4. 索引与行锁</span></span>
+<span class="line"><span>   row0sel.cc: 行搜索、加锁入口</span></span>
+<span class="line"><span>   btr0cur.cc: B+Tree 游标操作</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>5. Buffer Pool</span></span>
+<span class="line"><span>   buf0buf.cc: 页管理、LRU、Flush</span></span>
+<span class="line"><span>   buf0flu.cc: 刷盘策略</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>6. Redo Log</span></span>
+<span class="line"><span>   log0log.cc: Redo 写入、Checkpoint、恢复</span></span></code></pre>
+<hr>
+<blockquote>
+<p><strong>更新于 2026-09-09</strong> | 持续补充中…</p>
+<p><strong>参考源码</strong>：MySQL 8.0.39 / Percona Server 8.0 / MariaDB 10.11 InnoDB 源码</p>
+<p><strong>推荐工具</strong>：</p>
+<ul>
+<li><code>sys.schema_table_lock_waits</code> / <code>sys.innodb_lock_waits</code></li>
+<li><code>pt-deadlock-logger</code> 死锁收集</li>
+<li><code>mysqlslap</code> / <code>sysbench</code> 压测验证</li>
+<li><code>innodb_ruby</code> / <code>innodb_diagrams</code> 页结构可视化</li>
+</ul>
+</blockquote> </article> <hr class="my-8 border-dashed"> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/2026-09-09-MySQL锁事务引擎深度解析.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8"> <li> <a href="/tags/my-sql/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-2"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> MySQL </a> </li><li> <a href="/tags/inno-db/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-3"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> InnoDB </a> </li><li> <a href="/tags/锁/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-4"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 锁 </a> </li><li> <a href="/tags/事务/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-5"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 事务 </a> </li><li> <a href="/tags/mvcc/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-6"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> MVCC </a> </li><li> <a href="/tags/死锁/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-7"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 死锁 </a> </li><li> <a href="/tags/性能优化/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-8"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 性能优化 </a> </li> </ul> <div id="btt-btn-container" class="fixed end-4 bottom-8 z-50 md:sticky md:end-auto md:float-end md:me-1 translate-y-14 opacity-0 transition duration-500"> <button data-button="back-to-top" class="group relative bg-background px-2 py-1 size-14 rounded-full shadow-xl md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg"> <span id="progress-indicator" class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"></span> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block rotate-90 md:hidden"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg> <span class="sr-only text-sm group-hover:text-accent md:not-sr-only"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M16 9l-4 -4" /><path d="M8 9l4 -4" /></svg>
+Back To Top
+</span> </button> </div> <script data-astro-rerun>
+  /** Scrolls the document to the top when
+   * the "Back to Top" button is clicked. */
+  function backToTop() {
+    const rootElement = document.documentElement;
+    const btnContainer = document.querySelector("#btt-btn-container");
+    const backToTopBtn = document.querySelector("[data-button='back-to-top']");
+    const progressIndicator = document.querySelector("#progress-indicator");
+
+    if (!rootElement || !btnContainer || !backToTopBtn || !progressIndicator)
+      return;
+
+    // Attach click event handler for back-to-top button
+    backToTopBtn.addEventListener("click", () => {
+      document.body.scrollTop = 0; // For Safari
+      document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+    });
+
+    // Handle button visibility according to scroll position
+    let lastVisible = null;
+    function handleScroll() {
+      const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
+      const scrollTop = rootElement.scrollTop;
+      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+
+      progressIndicator.style.setProperty(
+        "background-image",
+        `conic-gradient(var(--accent), var(--accent) ${scrollPercent}%, transparent ${scrollPercent}%)`
+      );
+
+      const isVisible = scrollTop / scrollTotal > 0.3;
+
+      if (isVisible !== lastVisible) {
+        btnContainer.classList.toggle("opacity-100", isVisible);
+        btnContainer.classList.toggle("translate-y-0", isVisible);
+        btnContainer.classList.toggle("opacity-0", !isVisible);
+        btnContainer.classList.toggle("translate-y-14", !isVisible);
+        lastVisible = isVisible;
+      }
+    }
+
+    let ticking = false;
+    document.addEventListener("scroll", () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+  backToTop();
+</script> <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start"><span class="italic">Share this post on:</span><div class="text-center"><a href="mailto:?subject=See%20this%20post&#38;body=https://henuhaigang.github.io/posts/2026-09-09-mysql%E9%94%81%E4%BA%8B%E5%8A%A1%E5%BC%95%E6%93%8E%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/" title="Share this post via email" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg><span class="sr-only">Share this post via email</span> </a></div></div> <hr class="my-6 border-dashed"> <!-- Previous/Next Post Buttons --> <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2"> <a href="/posts/2026-09-09-mybatis线程池深度解析" class="flex w-full gap-1 hover:opacity-75"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block flex-none rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg> <div> <span>Previous Post</span> <div class="text-sm text-accent/85">MyBatis 线程池深度解析：从 Executor 体系到线上 OOM 事故复盘</div> </div> </a> <a href="/posts/2026-09-09-hashmap-jdk7到jdk21演进深度解析" class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"> <div> <span>Next Post</span> <div class="text-sm text-accent/85">HashMap JDK 7 到 JDK 21 演进深度解析：从数组链表到红黑树，再到更优的并发策略</div> </div> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block flex-none rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg> </a> </div> </main> <footer class="app-layout mt-auto"> <div class="py-6 sm:py-4 border-t border-border flex flex-col items-center justify-between sm:flex-row-reverse"> <div class="flex flex-wrap items-center gap-1"> <a href="https://github.com/henuhaigang" title="scorpion's blog on GitHub" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg> <span class="sr-only">scorpion&#39;s blog on GitHub</span>  </a><a href="mailto:guangzhinew@gmail.com" title="Send an email to scorpion's blog" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg> <span class="sr-only">Send an email to scorpion&#39;s blog</span>  </a> </div> <div class="my-2 flex flex-col items-center whitespace-nowrap sm:flex-row"> <span>Copyright &#169; 2026</span> <span class="hidden sm:inline">&nbsp;|&nbsp;</span> <span>All rights reserved.</span> </div> </div> </footer>  </body></html> <script data-astro-rerun>
+  /** Create a progress indicator
+   *  at the top */
+  function createProgressBar() {
+    // Create the main container div
+    const progressContainer = document.createElement("div");
+    progressContainer.className =
+      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+
+    // Create the progress bar div
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    progressBar.id = "myBar";
+
+    // Append the progress bar to the progress container
+    progressContainer.appendChild(progressBar);
+
+    // Append the progress container to the document body or any other desired parent element
+    document.body.appendChild(progressContainer);
+  }
+  createProgressBar();
+
+  /** Update the progress bar
+   *  when user scrolls */
+  function updateScrollProgress() {
+    document.addEventListener("scroll", () => {
+      const winScroll =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const height =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      if (document) {
+        const myBar = document.getElementById("myBar");
+        if (myBar) {
+          myBar.style.width = scrolled + "%";
+        }
+      }
+    });
+  }
+  updateScrollProgress();
+
+  /** Attaches links to headings in the document,
+   *  allowing sharing of sections easily */
+  function addHeadingLinks() {
+    const headings = Array.from(
+      document.querySelectorAll("h2, h3, h4, h5, h6")
+    );
+    for (const heading of headings) {
+      heading.classList.add("group");
+      const link = document.createElement("a");
+      link.className =
+        "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+      link.href = "#" + heading.id;
+
+      const span = document.createElement("span");
+      span.ariaHidden = "true";
+      span.innerText = "#";
+      link.appendChild(span);
+      heading.appendChild(link);
+    }
+  }
+  addHeadingLinks();
+
+  /** Attaches copy buttons to code blocks in the document,
+   * allowing users to copy code easily. */
+  function attachCopyButtons() {
+    const copyButtonLabel = "Copy";
+    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+
+    for (const codeBlock of codeBlocks) {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+
+      // Check if --file-name-offset custom property exists
+      const computedStyle = getComputedStyle(codeBlock);
+      const hasFileNameOffset =
+        computedStyle.getPropertyValue("--file-name-offset").trim() !== "";
+
+      // Determine the top positioning class
+      const topClass = hasFileNameOffset
+        ? "top-(--file-name-offset)"
+        : "-top-3";
+
+      const copyButton = document.createElement("button");
+      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+      copyButton.innerHTML = copyButtonLabel;
+      codeBlock.setAttribute("tabindex", "0");
+      codeBlock.appendChild(copyButton);
+
+      // wrap codebock with relative parent element
+      codeBlock?.parentNode?.insertBefore(wrapper, codeBlock);
+      wrapper.appendChild(codeBlock);
+
+      copyButton.addEventListener("click", async () => {
+        await copyCode(codeBlock, copyButton);
+      });
+    }
+
+    async function copyCode(block, button) {
+      const code = block.querySelector("code");
+      const text = code?.innerText;
+
+      await navigator.clipboard.writeText(text ?? "");
+
+      // visual feedback that task is completed
+      button.innerText = "Copied";
+
+      setTimeout(() => {
+        button.innerText = copyButtonLabel;
+      }, 700);
+    }
+  }
+  attachCopyButtons();
+
+  /* Go to page start after page swap */
+  document.addEventListener("astro:after-swap", () =>
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+  );
+</script>
