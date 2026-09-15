@@ -1,19 +1,19 @@
-<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="canonical" href="https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/"><meta name="generator" content="Astro v5.16.6"><!-- General Meta Tags --><title>Tomcat 小窥 | scorpion&#39;s blog</title><meta name="title" content="Tomcat 小窥 | scorpion's blog"><meta name="description" content="简单理解tomcat"><meta name="author" content="henuhaigang"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="Tomcat 小窥 | scorpion's blog"><meta property="og:description" content="简单理解tomcat"><meta property="og:url" content="https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/"><meta property="og:image" content="https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/index.png"><!-- Article Published/Modified time --><meta property="article:published_time" content="2026-09-15T10:01:00.000Z"><meta property="article:modified_time" content="2026-09-15T10:01:00.000Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/"><meta property="twitter:title" content="Tomcat 小窥 | scorpion's blog"><meta property="twitter:description" content="简单理解tomcat"><meta property="twitter:image" content="https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/index.png"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Tomcat 小窥 | scorpion's blog","image":"https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/index.png","datePublished":"2026-09-15T10:01:00.000Z","dateModified":"2026-09-15T10:01:00.000Z","author":[{"@type":"Person","name":"henuhaigang","url":"https://github.com/henuhaigang"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="scorpion's blog" href="https://henuhaigang.github.io/rss.xml"><meta name="theme-color" content=""><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.QW52Ox2j.js"></script><script src="/toggle-theme.js"></script><link rel="stylesheet" href="/_astro/about.BVNVd-UD.css">
+<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="canonical" href="https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/"><meta name="generator" content="Astro v5.16.6"><!-- General Meta Tags --><title>Tomcat 核心机制深度解析：从架构设计到生产调优 | scorpion&#39;s blog</title><meta name="title" content="Tomcat 核心机制深度解析：从架构设计到生产调优 | scorpion's blog"><meta name="description" content="Tomcat 核心机制深度解析：架构设计、NIO线程模型、类加载器隔离、生产调优参数、Spring Boot内嵌差异、线上排查实战"><meta name="author" content="henuhaigang"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="Tomcat 核心机制深度解析：从架构设计到生产调优 | scorpion's blog"><meta property="og:description" content="Tomcat 核心机制深度解析：架构设计、NIO线程模型、类加载器隔离、生产调优参数、Spring Boot内嵌差异、线上排查实战"><meta property="og:url" content="https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/"><meta property="og:image" content="https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/index.png"><!-- Article Published/Modified time --><meta property="article:published_time" content="2026-09-15T10:01:00.000Z"><meta property="article:modified_time" content="2026-09-15T10:01:00.000Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/"><meta property="twitter:title" content="Tomcat 核心机制深度解析：从架构设计到生产调优 | scorpion's blog"><meta property="twitter:description" content="Tomcat 核心机制深度解析：架构设计、NIO线程模型、类加载器隔离、生产调优参数、Spring Boot内嵌差异、线上排查实战"><meta property="twitter:image" content="https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/index.png"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Tomcat 核心机制深度解析：从架构设计到生产调优 | scorpion's blog","image":"https://henuhaigang.github.io/posts/tomcat-%E5%B0%8F%E8%B0%88/index.png","datePublished":"2026-09-15T10:01:00.000Z","dateModified":"2026-09-15T10:01:00.000Z","author":[{"@type":"Person","name":"henuhaigang","url":"https://github.com/henuhaigang"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="scorpion's blog" href="https://henuhaigang.github.io/rss.xml"><meta name="theme-color" content=""><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.QW52Ox2j.js"></script><script src="/toggle-theme.js"></script><link rel="stylesheet" href="/_astro/about.BVNVd-UD.css">
 <style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media(prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
 :where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
-</style><style>[data-astro-transition-scope="astro-fam6wyqg-1"] { view-transition-name: tomcat-\5C0F\7AA5; }@layer astro { ::view-transition-old(tomcat-\5C0F\7AA5) { 
+</style><style>[data-astro-transition-scope="astro-fam6wyqg-1"] { view-transition-name: tomcat-\6838\5FC3\673A\5236\6DF1\5EA6\89E3\6790\FF1A\4ECE\67B6\6784\8BBE\8BA1\5230\751F\4EA7\8C03\4F18; }@layer astro { ::view-transition-old(tomcat-\6838\5FC3\673A\5236\6DF1\5EA6\89E3\6790\FF1A\4ECE\67B6\6784\8BBE\8BA1\5230\751F\4EA7\8C03\4F18) { 
 	animation-duration: 180ms;
 	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
 	animation-fill-mode: both;
-	animation-name: astroFadeOut; }::view-transition-new(tomcat-\5C0F\7AA5) { 
+	animation-name: astroFadeOut; }::view-transition-new(tomcat-\6838\5FC3\673A\5236\6DF1\5EA6\89E3\6790\FF1A\4ECE\67B6\6784\8BBE\8BA1\5230\751F\4EA7\8C03\4F18) { 
 	animation-duration: 180ms;
 	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
 	animation-fill-mode: both;
-	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(tomcat-\5C0F\7AA5) { 
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(tomcat-\6838\5FC3\673A\5236\6DF1\5EA6\89E3\6790\FF1A\4ECE\67B6\6784\8BBE\8BA1\5230\751F\4EA7\8C03\4F18) { 
 	animation-duration: 180ms;
 	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
 	animation-fill-mode: both;
-	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(tomcat-\5C0F\7AA5) { 
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(tomcat-\6838\5FC3\673A\5236\6DF1\5EA6\89E3\6790\FF1A\4ECE\67B6\6784\8BBE\8BA1\5230\751F\4EA7\8C03\4F18) { 
 	animation-duration: 180ms;
 	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
 	animation-fill-mode: both;
@@ -297,129 +297,622 @@ Posts
 Tags
 </a> </li> <li class="col-span-2"> <a href="/about">
 About
-</a> </li> <li class="col-span-2"> <a href="/archives" title="Archives" aria-label="archives" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex justify-center p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden sm:inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" /><path d="M10 12l4 0" /></svg> <span class="sm:sr-only">Archives</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <a href="/search" title="Search" aria-label="search" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg> <span class="sr-only">Search</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <button id="theme-btn" class="focus-outline relative size-12 p-4 sm:size-8 hover:[&>svg]:stroke-accent" title="Toggles light & dark" aria-label="auto" aria-live="polite"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg> </button> </li> </ul> </nav> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <div class="app-layout flex items-center justify-start"><a id="back-button" href="/" class="group inline-flex items-center gap-1 hover:text-accent focus-outline -ms-2 mt-8 mb-2 hover:text-foreground/75"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg><span>Go back</span> </a></div><script type="module">function o(){const t=document.querySelector("#back-button"),e=sessionStorage.getItem("backUrl");e&&t&&(t.href=e)}document.addEventListener("astro:page-load",o);o();</script> <main id="main-content" class="app-layout pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl" data-astro-transition-scope="astro-fam6wyqg-1"> Tomcat 小窥 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2026-09-15T10:01:00.000Z">15 Sep, 2026</time> </div> <span aria-hidden="true" class="max-sm:hidden">|</span> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/tomcat 小谈.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent max-sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> </div> <article id="article" class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <h1 id="tomcat-核心机制深度解析从架构设计到生产调优">Tomcat 核心机制深度解析：从架构设计到生产调优</h1>
+</a> </li> <li class="col-span-2"> <a href="/archives" title="Archives" aria-label="archives" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex justify-center p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden sm:inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" /><path d="M10 12l4 0" /></svg> <span class="sm:sr-only">Archives</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <a href="/search" title="Search" aria-label="search" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg> <span class="sr-only">Search</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <button id="theme-btn" class="focus-outline relative size-12 p-4 sm:size-8 hover:[&>svg]:stroke-accent" title="Toggles light & dark" aria-label="auto" aria-live="polite"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg> </button> </li> </ul> </nav> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <div class="app-layout flex items-center justify-start"><a id="back-button" href="/" class="group inline-flex items-center gap-1 hover:text-accent focus-outline -ms-2 mt-8 mb-2 hover:text-foreground/75"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg><span>Go back</span> </a></div><script type="module">function o(){const t=document.querySelector("#back-button"),e=sessionStorage.getItem("backUrl");e&&t&&(t.href=e)}document.addEventListener("astro:page-load",o);o();</script> <main id="main-content" class="app-layout pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl" data-astro-transition-scope="astro-fam6wyqg-1"> Tomcat 核心机制深度解析：从架构设计到生产调优 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2026-09-15T10:01:00.000Z">15 Sep, 2026</time> </div> <span aria-hidden="true" class="max-sm:hidden">|</span> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/tomcat 小谈.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent max-sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> </div> <article id="article" class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <h1 id="tomcat-核心机制深度解析从架构设计到生产调优">Tomcat 核心机制深度解析：从架构设计到生产调优</h1>
 <h2 id="一为什么12年经验的工程师还需要深入理解tomcat">一、为什么12年经验的工程师还需要深入理解Tomcat</h2>
-<p>Spring Boot已经将Tomcat封装得足够透明，<code>spring-boot-starter-web</code>引入后一个main方法就能启动Web服务。但透明不等于不需要理解。在生产环境中遇到502/504、线程池耗尽、内存泄漏、类加载冲突等问题时，能否快速定位根因，取决于对Tomcat内部机制的掌握程度。</p>
+<p>Spring Boot已经将Tomcat封装得足够透明，<code>spring-boot-starter-web</code>引入后一个main方法就能启动Web服务。但<strong>透明不等于不需要理解</strong>。在生产环境中遇到502/504、线程池耗尽、内存泄漏、类加载冲突等问题时，能否快速定位根因，取决于对Tomcat内部机制的掌握程度。</p>
 <p>Tomcat的架构设计体现了几个经典的模式：<strong>连接与处理分离</strong>、<strong>责任链模式</strong>、<strong>生命周期管理</strong>、<strong>自定义类加载器打破双亲委派</strong>。这些设计思想在分布式系统、网关设计、微服务框架中反复出现。理解Tomcat，本质上是理解“一个成熟的请求处理系统应该如何组织”。</p>
+<hr>
 <h2 id="二整体架构server-service-connector-container四层模型">二、整体架构：Server-Service-Connector-Container四层模型</h2>
 <p>Tomcat的架构可以用一句话概括：<strong>Connector负责“接客”，Container负责“办事”</strong>。</p>
 <pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Server（JVM进程级容器，全局唯一）</span></span>
 <span class="line"><span> └── Service（服务组织单元，将Connector和Engine绑定）</span></span>
-<span class="line"><span>      ├── Connector（连接器，可多个，负责网络通信和协议解析）</span></span>
-<span class="line"><span>      │    └── Endpoint → Processor → Adapter</span></span>
-<span class="line"><span>      └── Engine（Servlet引擎，一个Service只有一个）</span></span>
-<span class="line"><span>           └── Host（虚拟主机，按域名配置）</span></span>
-<span class="line"><span>                └── Context（Web应用，每个应用独立类加载器）</span></span>
-<span class="line"><span>                     └── Wrapper（Servlet包装器，最小处理单元）</span></span></code></pre>
-<p><strong>Server</strong>是整个Tomcat实例，一个JVM进程只有一个Server，管理所有组件的生命周期。<strong>Service</strong>将Connector和Engine组织在一起，一个Server可以有多个Service，但通常只有一个名为“Catalina”的Service。<strong>Connector</strong>对外提供服务的入口，支持HTTP/1.1和AJP两种协议。<strong>Container</strong>是层次结构，Engine→Host→Context→Wrapper，请求按层级逐层路由，采用责任链模式。</p>
-<p>这种“连接与处理分离”的设计带来关键好处：可以配置多个Connector共享同一个Engine。例如一个HTTP端口对外服务，一个AJP端口与Nginx对接，请求最终都走到同一套Container处理逻辑。</p>
+<span class="line"><span>       ├── Connector（连接器，可多个，负责网络通信和协议解析）</span></span>
+<span class="line"><span>       │    └── Endpoint → Processor → Adapter</span></span>
+<span class="line"><span>       └── Engine（Servlet引擎，一个Service只有一个）</span></span>
+<span class="line"><span>            └── Host（虚拟主机，按域名配置）</span></span>
+<span class="line"><span>                 └── Context（Web应用，每个应用独立类加载器）</span></span>
+<span class="line"><span>                      └── Wrapper（Servlet包装器，最小处理单元）</span></span></code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>组件</th><th>核心职责</th><th>关键实现类</th></tr></thead><tbody><tr><td><strong>Server</strong></td><td>整个Tomcat实例，管理生命周期、监听shutdown端口</td><td><code>StandardServer</code></td></tr><tr><td><strong>Service</strong></td><td>将Connector与Engine绑定，一个Server可多个Service</td><td><code>StandardService</code></td></tr><tr><td><strong>Connector</strong></td><td>网络通信入口，协议解析（HTTP/1.1、AJP）</td><td><code>Http11NioProtocol</code></td></tr><tr><td><strong>Engine</strong></td><td>请求处理入口，管理多个Host</td><td><code>StandardEngine</code></td></tr><tr><td><strong>Host</strong></td><td>虚拟主机，域名隔离、应用部署目录管理</td><td><code>StandardHost</code></td></tr><tr><td><strong>Context</strong></td><td>一个Web应用，独立类加载器、Session管理</td><td><code>StandardContext</code></td></tr><tr><td><strong>Wrapper</strong></td><td>一个Servlet的包装器，管理Servlet生命周期</td><td><code>StandardWrapper</code></td></tr></tbody></table>
+<p><strong>设计精髓</strong>：“连接与处理分离”带来关键好处——<strong>多个Connector可共享同一个Engine</strong>。例如：8080端口对外提供HTTP服务，8009端口走AJP协议与Nginx对接，请求最终都路由到同一套Container处理逻辑。</p>
+<hr>
 <h2 id="三connector内部机制nio线程模型">三、Connector内部机制：NIO线程模型</h2>
 <p>Connector内部有三层核心结构：<strong>Endpoint → Processor → Adapter</strong>。Endpoint负责网络I/O，Processor负责协议解析，Adapter负责将请求适配后交给容器。</p>
 <h3 id="31-nio的acceptor-poller-executor协作">3.1 NIO的Acceptor-Poller-Executor协作</h3>
-<p>Tomcat 8.0开始，NIO成为默认I/O模型。NioEndpoint将网络通信分离为三个步骤：</p>
-<p><strong>Acceptor线程</strong>：循环接收TCP连接。使用<code>LimitLatch</code>限制最大连接数量，达到上限时等待。TCP三次握手完成后，连接被封装为<code>PollerEvent</code>放入Poller的队列。</p>
-<p><strong>Poller线程</strong>：维护一个<code>Selector</code>对象，从队列中取出连接并注册到Selector上，监听IO事件。当读就绪事件发生时，将连接交给Executor处理。Acceptor到Poller通过队列通信，是典型的生产者-消费者模式。</p>
-<p><strong>Executor线程池</strong>：池化线程执行后续流程——解析HTTP请求、封装Request/Response、调用容器处理。</p>
-<p>这里有一个关键的面试考点：在NIO模式下，Acceptor接收socket和线程处理请求仍然是阻塞方式，只有“读取socket数据并交给Worker线程”这一步使用了非阻塞NIO。这是NIO与BIO最本质的区别。</p>
-<h3 id="32-三种io模型的演进">3.2 三种I/O模型的演进</h3>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<table><thead><tr><th align="left">模型</th><th align="left">核心机制</th><th align="left">默认连接数</th><th align="left">状态</th></tr></thead><tbody><tr><td align="left">BIO</td><td align="left">一连接一线程，<code>Http11Protocol</code></td><td align="left">maxThreads</td><td align="left">Tomcat 8.5起移除</td></tr><tr><td align="left">NIO</td><td align="left">多路复用，<code>Http11NioProtocol</code></td><td align="left">10000</td><td align="left">Tomcat 8.0+默认</td></tr><tr><td align="left">NIO2</td><td align="left">异步I/O，<code>Http11Nio2Protocol</code></td><td align="left">10000</td><td align="left">适合Windows</td></tr><tr><td align="left">APR</td><td align="left">JNI调用本地库，OpenSSL加速</td><td align="left">8192</td><td align="left">Tomcat 10弃用</td></tr></tbody></table>
-<p>NIO2使用异步IO模型，基于回调函数处理连接和数据就绪事件，在Windows上因为操作系统原生支持真正的异步I/O而表现更好。APR通过JNI调用本地库，用C语言实现的OpenSSL处理TLS握手和加解密，性能极高，但需要在Tomcat 10中被弃用，因为其维护成本高且NIO的性能已经足够。</p>
-<h2 id="四生产环境调优参数的关系与配置策略">四、生产环境调优：参数的关系与配置策略</h2>
-<p>Tomcat调优的核心是让线程池、队列与后端处理能力匹配。三个关键参数是面试高频考点：</p>
+<p>Tomcat 8.0开始，NIO成为默认I/O模型。<code>NioEndpoint</code>将网络通信分离为三个步骤：</p>
+<p><strong>Acceptor线程</strong>（默认1个，可配<code>acceptorThreadCount</code>）：</p>
 <ul>
-<li><strong>maxThreads</strong>：线程池最大活跃线程数，直接决定实际可同时处理的请求数。推荐每核50-100为起点，4核可先试200-400。</li>
-<li><strong>acceptCount</strong>：TCP连接队列长度（<code>ServerSocket.bind</code>的backlog参数），默认100。当所有线程被占用后，新连接放入此队列，超过则拒绝（connection refused）。</li>
-<li><strong>maxConnections</strong>：Tomcat允许的最大连接数，默认NIO为10000。连接数达到此值后，系统会继续接收连接，但总数不会超过<code>maxConnections + acceptCount</code>。</li>
+<li>循环调用<code>ServerSocketChannel.accept()</code>阻塞等待新连接</li>
+<li>使用<code>LimitLatch</code>限制最大连接数（<code>maxConnections</code>），达到上限时等待</li>
+<li>TCP三次握手完成后，将连接封装为<code>PollerEvent</code>放入Poller的同步队列</li>
 </ul>
-<p>三者的关系可以概括为：<strong>maxThreads决定并发处理能力，acceptCount决定缓冲能力，maxConnections决定连接上限</strong>。线程饥饿时优先提升maxThreads和acceptCount，同时用Nginx做前端限流。</p>
-<p>一个容易忽略的点是<code>minSpareThreads</code>（默认10）。维持少量热线程可以避免突发流量时线程创建的开销。对于延迟敏感的服务，可以适当提高到25左右。</p>
-<p>在JDK 21 + Spring Boot 3.2+的环境下，可以考虑虚拟线程。Spring Boot 3.2原生支持通过配置<code>spring.threads.virtual.enabled=true</code>启用虚拟线程，对于I/O密集型的Web应用能显著提升吞吐量。但虚拟线程对CPU密集型任务没有优势，且需要关注ThreadLocal的使用——虚拟线程数量巨大时，ThreadLocal可能导致内存问题。</p>
+<p><strong>Poller线程</strong>（默认1-2个，可配<code>pollerThreadCount</code>）：</p>
+<ul>
+<li>维护一个<code>Selector</code>对象，从队列取出连接并注册<code>OP_READ</code>事件</li>
+<li><code>selector.select(timeout)</code>轮询就绪事件</li>
+<li>读就绪时，封装<code>SocketProcessor</code>提交给Executor线程池</li>
+<li>Acceptor→Poller通过队列通信，典型的<strong>生产者-消费者模式</strong></li>
+</ul>
+<p><strong>Executor线程池</strong>（默认<code>maxThreads=200</code>）：</p>
+<ul>
+<li>池化线程执行后续流程：解析HTTP请求、封装Request/Response、调用容器处理</li>
+<li>核心类：<code>ThreadPoolExecutor</code> + 自定义<code>TaskQueue</code>（关键改写了<code>offer</code>逻辑）</li>
+</ul>
+<blockquote>
+<p><strong>面试高频考点</strong>：在NIO模式下，<strong>Acceptor接收socket和Worker线程处理请求仍然是阻塞方式</strong>，只有“读取socket数据并交给Worker线程”这一步使用了非阻塞NIO。这是NIO与BIO最本质的区别。</p>
+</blockquote>
+<h3 id="32-三种io模型的演进与选型">3.2 三种I/O模型的演进与选型</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>模型</th><th>协议类</th><th>I/O机制</th><th>线程模型</th><th>默认最大连接数</th><th>适用场景</th><th>状态</th></tr></thead><tbody><tr><td><strong>BIO</strong></td><td><code>Http11Protocol</code></td><td>阻塞I/O</td><td>一连接一线程</td><td><code>maxThreads</code></td><td>已废弃</td><td>Tomcat 8.5移除</td></tr><tr><td><strong>NIO</strong></td><td><code>Http11NioProtocol</code></td><td>多路复用</td><td>Acceptor+Poller+Worker</td><td>10000</td><td><strong>通用推荐，99%场景</strong></td><td>Tomcat 8.0+默认</td></tr><tr><td><strong>NIO2</strong></td><td><code>Http11Nio2Protocol</code></td><td>异步I/O(AIO)</td><td>回调驱动</td><td>10000</td><td>Windows长连接/推送</td><td>可选</td></tr><tr><td><strong>APR</strong></td><td><code>Http11AprProtocol</code></td><td>JNI+OpenSSL</td><td>Native线程</td><td>8192</td><td>极致HTTPS性能</td><td>Tomcat 10弃用</td></tr></tbody></table>
+<p><strong>选型建议</strong>：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>需要 HTTPS 高性能？</span></span>
+<span class="line"><span>  ├─ 是：前置 Nginx 卸载 TLS（推荐）或 NIO + APR/OpenSSL</span></span>
+<span class="line"><span>  └─ 否：直接 NIO</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>长连接 / SSE / WebSocket 多？</span></span>
+<span class="line"><span>  ├─ NIO2 理论更优，但 NIO 生态更成熟</span></span>
+<span class="line"><span>  └─ 一般场景 NIO 即可</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>追求极简运维、无 native 依赖？</span></span>
+<span class="line"><span>  └─ NIO，开箱即用</span></span></code></pre>
+<hr>
+<h2 id="四生产环境调优参数的关系与配置策略">四、生产环境调优：参数的关系与配置策略</h2>
+<p>Tomcat调优的核心是让<strong>线程池、队列、连接数与后端处理能力匹配</strong>。</p>
+<h3 id="41-三大核心参数详解">4.1 三大核心参数详解</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="xml"><code><span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#7FDBCA">&#x3C;</span><span style="--shiki-light:#22863A;--shiki-dark:#CAECE6">Connector</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#C5E478;--shiki-dark-font-style:italic"> port</span><span style="--shiki-light:#24292EFF;--shiki-dark:#7FDBCA">=</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">8080</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#24292EFF;--shiki-dark:#7FDBCA"> </span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#C5E478;--shiki-dark-font-style:italic">           protocol</span><span style="--shiki-light:#24292EFF;--shiki-dark:#7FDBCA">=</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">org.apache.coyote.http11.Http11NioProtocol</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#C5E478;--shiki-dark-font-style:italic">           maxThreads</span><span style="--shiki-light:#24292EFF;--shiki-dark:#7FDBCA">=</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">400</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#24292EFF;--shiki-dark:#7FDBCA">          &#x3C;!-- Worker线程池最大线程数，默认200 --></span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           minSpareThreads="50"      </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">&#x3C;!-- 最小空闲线程，默认10，避免突发创建开销 --></span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           acceptCount="500"         </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">&#x3C;!-- TCP接受队列长度，默认100，队列满则拒绝连接 --></span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           maxConnections="10000"    </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">&#x3C;!-- 最大连接数，NIO默认10000 --></span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           connectionTimeout="20000" </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">&#x3C;!-- 连接超时 20s --></span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           keepAliveTimeout="5000"   </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">&#x3C;!-- Keep-Alive超时，API建议缩短至5s --></span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           maxKeepAliveRequests="30" </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">&#x3C;!-- 单连接最大请求数 --></span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           acceptorThreadCount="2"   </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">&#x3C;!-- Acceptor线程数 --></span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           pollerThreadCount="2"     </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">&#x3C;!-- Poller线程数 --></span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           compression="on"          </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">&#x3C;!-- GZIP压缩 --></span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           compressionMinSize="2048"</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">           compressableMimeType="text/html,text/xml,text/plain,application/json" /></span></span></code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>参数</th><th>决定能力</th><th>调优建议</th></tr></thead><tbody><tr><td><strong>maxThreads</strong></td><td>并发处理能力</td><td>CPU核数 × (1 + IO耗时/CPU耗时)，API服务200-400，IO密集可到800</td></tr><tr><td><strong>acceptCount</strong></td><td>缓冲/排队能力</td><td>配合Nginx限流，防止突发流量拒绝连接，建议200-500</td></tr><tr><td><strong>maxConnections</strong></td><td>连接上限</td><td>NIO长连接场景通常大于maxThreads，默认10000通常足够</td></tr></tbody></table>
+<p><strong>三者关系</strong>：<code>maxThreads</code>决定<strong>同时干活的人数</strong>，<code>acceptCount</code>决定<strong>等候区大小</strong>，<code>maxConnections</code>决定<strong>允许进门的总人数</strong>。</p>
+<h3 id="42-线程池内部机制taskqueue的关键作用">4.2 线程池内部机制：TaskQueue的关键作用</h3>
+<p>Tomcat自定义的<code>TaskQueue</code>（继承<code>LinkedBlockingQueue</code>）重写了<code>offer</code>方法：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> boolean</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> offer</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Runnable</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF"> o</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">parent</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">getPoolSize</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> ==</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> parent</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">getMaximumPoolSize</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        return</span><span style="--shiki-light:#24292EFF;--shiki-dark:#7FDBCA"> super</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">offer</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">o</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">; </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 线程已满，入队等待</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">parent</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">getPoolSize</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> &#x3C;</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> parent</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">getMaximumPoolSize</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        return</span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF"> false</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">; </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 线程未满，**不入队，返回false触发线程池创建新线程**</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    return</span><span style="--shiki-light:#24292EFF;--shiki-dark:#7FDBCA"> super</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">offer</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">o</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p><strong>核心启示</strong>：<strong>队列大小反而次要</strong>，<code>maxThreads</code>才是并发上限的真正决定因素。误以为“队列大就能扛突发”是错的，队列大反而掩盖线程不足问题。</p>
+<h3 id="43-场景化配置参考">4.3 场景化配置参考</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>场景</th><th>maxThreads</th><th>minSpareThreads</th><th>acceptCount</th><th>maxConnections</th><th>关键点</th></tr></thead><tbody><tr><td><strong>纯API微服务</strong></td><td>200-400</td><td>50</td><td>200</td><td>10000</td><td>CPU密集，配合限流</td></tr><tr><td><strong>IO密集(DB/Redis)</strong></td><td>400-800</td><td>100</td><td>500</td><td>10000</td><td>IO等待多，适当增线程</td></tr><tr><td><strong>文件上传/下载</strong></td><td>200</td><td>20</td><td>100</td><td>2000</td><td>大请求限制并发防OOM</td></tr><tr><td><strong>WebSocket长连接</strong></td><td>200</td><td>50</td><td>500</td><td>20000</td><td>长连接占连接数不占线程</td></tr></tbody></table>
+<h3 id="44-虚拟线程jdk-21--spring-boot-32">4.4 虚拟线程（JDK 21+ / Spring Boot 3.2+）</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="yaml"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">spring</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB">:</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">  threads</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB">:</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">    virtual</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB">:</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">      enabled</span><span style="--shiki-light:#D32F2F;--shiki-dark:#D6DEEB">:</span><span style="--shiki-light:#1976D2;--shiki-dark:#FF5874"> true</span></span></code></pre>
+<ul>
+<li>I/O密集型Web应用显著提升吞吐量，突破<code>maxThreads</code>物理线程限制</li>
+<li><strong>注意</strong>：CPU密集型无优势，<code>ThreadLocal</code>可能导致内存问题（虚拟线程量巨大），需审查代码中的<code>ThreadLocal</code>使用</li>
+</ul>
+<hr>
 <h2 id="五类加载机制打破双亲委派的艺术">五、类加载机制：打破双亲委派的艺术</h2>
-<p>Tomcat的类加载器体系是其架构中设计最精巧的部分之一，也是高级面试的必问点。</p>
+<p>Tomcat的类加载器体系是其架构中设计最精巧的部分，也是高级面试必问点。</p>
 <h3 id="51-为什么必须打破双亲委派">5.1 为什么必须打破双亲委派</h3>
-<p>标准双亲委派模型的加载顺序是：Bootstrap → Extension → Application。这意味着应用类加载器（AppClassLoader）加载的类，在Web应用层面无法被覆盖。</p>
-<p>但Tomcat作为Web容器，同时部署多个Web应用时，需要满足：</p>
+<p>标准双亲委派：Bootstrap → Extension → Application。应用类加载器加载的类，Web应用层面无法覆盖。</p>
+<p>Tomcat作为Web容器，需同时满足：</p>
 <ol>
-<li><strong>隔离性</strong>：不同Web应用可以加载同名但不同版本的类（如两个应用依赖不同版本的Spring）；</li>
-<li><strong>优先性</strong>：Web应用自定义的类应优先于容器共享的类加载。</li>
+<li><strong>隔离性</strong>：不同Web应用加载同名不同版本的类（如Spring 5 vs Spring 6）</li>
+<li><strong>优先性</strong>：Web应用自定义类优先于容器共享类加载</li>
 </ol>
-<p>双亲委派模型无法同时满足这两个需求，因此Tomcat设计了自定义的<code>WebappClassLoader</code>，<strong>打破了标准双亲委派模型</strong>。</p>
-<h3 id="52-webappclassloader的加载顺序">5.2 WebappClassLoader的加载顺序</h3>
-<p>Tomcat的<code>WebappClassLoader</code>重写了<code>loadClass</code>方法，加载顺序如下：</p>
+<p>双亲委派无法满足，因此Tomcat设计<code>WebappClassLoader</code><strong>打破双亲委派</strong>。</p>
+<h3 id="52-webappclassloader加载顺序子优先">5.2 WebappClassLoader加载顺序（子优先）</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// org.apache.catalina.loader.WebappClassLoaderBase</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">@</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Override</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> Class&#x3C;</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">?</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">></span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> loadClass</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">String</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF"> name</span><span style="--shiki-light:#212121;--shiki-dark:#82AAFF">,</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> boolean</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF"> resolve</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> throws ClassNotFoundException {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">getClassLoadingLock</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF">name</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">        // 1. 本地缓存</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">        Class</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">&#x3C;</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">?</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">> </span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478">clazz</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> findLoadedClass</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF">name</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (clazz </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">!=</span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF"> null</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) </span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">return</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> clazz;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">        // 2. 关键：打破双亲委派，先尝试自己加载（WEB-INF/classes、lib）</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">!</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">name</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">startsWith</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">java.</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> &#x26;&#x26;</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> !</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">name</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">startsWith</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">javax.</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">            try</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">                clazz </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> findClass</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF">name</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">; </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 自己先找</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">                if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (clazz </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">!=</span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF"> null</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) </span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">return</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> clazz;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">            } </span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">catch</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD"> (</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">ClassNotFoundException</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> e</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">                // 找不到再委托父加载器</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">            }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">        // 3. 委托父加载器</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        return</span><span style="--shiki-light:#24292EFF;--shiki-dark:#7FDBCA"> super</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">loadClass</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">name</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">,</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> resolve</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p><strong>加载顺序</strong>：</p>
 <ol>
-<li><strong>本地Cache</strong>：检查Tomcat类加载器是否已加载过；</li>
-<li><strong>系统类加载器Cache</strong>：检查AppClassLoader是否已加载；</li>
-<li><strong>ExtClassLoader优先</strong>：先让ExtClassLoader尝试加载，防止Web应用自定义的类覆盖JRE核心类（如自定义<code>java.lang.Object</code>）；</li>
-<li><strong>本地Web应用目录</strong>：在<code>WEB-INF/classes</code>和<code>WEB-INF/lib</code>中查找；</li>
-<li><strong>AppClassLoader兜底</strong>：本地找不到时，委托给系统类加载器；</li>
-<li>全部失败抛出<code>ClassNotFoundException</code>。</li>
+<li>本地Cache → 2. 系统类加载器Cache → 3. <strong>ExtClassLoader优先</strong>（防覆盖核心类） → 4. <strong>本地Web应用目录</strong>（WEB-INF/classes、lib） → 5. AppClassLoader兜底</li>
 </ol>
-<p>关键的<strong>顺序反转</strong>在于第3步和第4步之间：先让ExtClassLoader加载，再尝试本地目录。这与标准双亲委派（先父后子）完全相反。但注意，Tomcat并非完全抛弃双亲委派——<code>java.*</code>核心类仍然委派给父加载器以保证安全，只有应用类（<code>WEB-INF/lib</code>）才执行顺序反转。</p>
 <h3 id="53-类加载器层次结构">5.3 类加载器层次结构</h3>
-<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Bootstrap ClassLoader（加载JDK核心类）</span></span>
-<span class="line"><span> └── Extension ClassLoader（加载JDK扩展类）</span></span>
-<span class="line"><span>      └── System ClassLoader（加载Tomcat启动类、CATALINA_HOME/lib）</span></span>
-<span class="line"><span>           └── Common ClassLoader（加载Tomcat和Web应用共享的类）</span></span>
-<span class="line"><span>                ├── WebappClassLoader（每个Web应用一个，加载WEB-INF/classes和lib）</span></span>
-<span class="line"><span>                └── JasperLoader（JSP编译后的类）</span></span></code></pre>
-<p><code>Common ClassLoader</code>加载<code>$CATALINA_HOME/lib</code>下的类，这些类对所有Web应用可见（如Servlet API、JSP API）。每个Web应用有独立的<code>WebappClassLoader</code>，实现应用间的类隔离。</p>
-<p>这个设计解决了实际生产中的一个常见问题：Tomcat自身依赖的库（如<code>tomcat-juli</code>）与Web应用依赖的同类库版本不同时，不会互相干扰。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Bootstrap ClassLoader（JDK核心类 rt.jar）</span></span>
+<span class="line"><span> └── Platform/Extension ClassLoader（JDK扩展）</span></span>
+<span class="line"><span>      └── System ClassLoader（classpath、Tomcat启动类）</span></span>
+<span class="line"><span>           └── Common ClassLoader（$CATALINA_HOME/lib，容器与应用共享）</span></span>
+<span class="line"><span>                ├── WebappClassLoader（每个Context一个，加载WEB-INF/classes、lib）</span></span>
+<span class="line"><span>                └── JasperLoader（JSP编译后的类，每个JSP一个）</span></span></code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>加载器</th><th>加载路径</th><th>可见性</th><th>典型用途</th></tr></thead><tbody><tr><td>Common</td><td><code>$CATALINA_HOME/lib</code></td><td>所有Web应用</td><td>Servlet API、JSP API、JDBC驱动</td></tr><tr><td>WebappClassLoader</td><td><code>WEB-INF/classes</code>、<code>WEB-INF/lib/*.jar</code></td><td>仅当前Web应用</td><td>应用业务类、依赖库</td></tr><tr><td>JasperLoader</td><td><code>work/Catalina/localhost/...</code></td><td>仅对应JSP</td><td>JSP编译生成的Servlet类</td></tr></tbody></table>
+<blockquote>
+<p><strong>生产避坑</strong>：<code>delegate="false"</code>（默认，子优先）实现隔离；<code>delegate="true"</code>强制父优先，用于容器统一管理JDBC驱动等场景。</p>
+</blockquote>
+<h3 id="54-内存泄漏重灾区12年血泪教训">5.4 内存泄漏重灾区（12年血泪教训）</h3>
+<p><strong>典型泄漏 1：ThreadLocal 未清理</strong></p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// WebApp卸载时，Worker线程仍持有ThreadLocal → 持有WebappClassLoader → 无法GC</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> static</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> ThreadLocal</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">&#x3C;</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Connection</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">> </span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478">holder</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> ThreadLocal</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">&#x3C;>();</span></span></code></pre>
+<p><strong>典型泄漏 2：JDBC驱动未注销</strong></p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// mysql-connector静态注册到DriverManager（System ClassLoader加载）</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 持有WebApp ClassLoader引用</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">@</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">WebListener</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> CleanupListener</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> implements</span><span style="--shiki-light:#6F42C1;--shiki-dark:#C5E478"> ServletContextListener</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    @</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Override</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> contextDestroyed</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">ServletContextEvent</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> sce</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">        Enumeration</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">&#x3C;</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Driver</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">> </span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478">drivers</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> DriverManager</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">getDrivers</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        while</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">drivers</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">hasMoreElements</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">            Driver</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> driver</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> drivers</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">nextElement</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">            if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">driver</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">getClass</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">getClassLoader</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> ==</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> getClass</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">getClassLoader</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">                DriverManager</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">deregisterDriver</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">driver</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">            }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">        // 同时清理：ThreadLocal、线程池、Timer、ShutdownHook</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p><strong>典型泄漏 3：非守护线程未停止</strong></p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// WebApp启动的线程，ClassLoader为WebappClassLoader，线程存活则ClassLoader无法回收</span></span></code></pre>
+<p><strong>排查工具</strong>：<code>jmap -histo:live</code>看<code>WebappClassLoader</code>实例数；<code>jcmd &#x3C;pid> GC.classloader_stats</code>；开启泄漏检测日志。</p>
+<hr>
 <h2 id="六spring-boot内嵌tomcat的差异">六、Spring Boot内嵌Tomcat的差异</h2>
-<p>Spring Boot内嵌Tomcat与传统独立部署Tomcat在运行机制上有一个本质区别：</p>
-<p><strong>独立部署</strong>：Tomcat作为独立进程启动，Web应用以WAR包形式部署到<code>webapps</code>目录，Tomcat的类加载器负责加载WAR中的类。启动流程是“Tomcat启动 → 扫描WAR → 加载应用”。</p>
-<p><strong>内嵌部署</strong>：Tomcat以jar包依赖的形式打包在应用中，通过<code>TomcatServletWebServerFactory</code>在Spring容器启动过程中创建<code>Tomcat</code>实例对象。启动流程是“Spring Boot启动 → 创建内嵌Tomcat对象 → 注册Servlet → 启动Tomcat”。</p>
-<p>内嵌模式下，类加载器体系也发生了变化。由于Tomcat的jar包和应用的jar包在同一个类路径下，由同一个<code>AppClassLoader</code>加载，Web应用的类隔离机制不再生效。这在多模块部署时需要特别注意——内嵌模式下没有<code>WebappClassLoader</code>来隔离不同应用的类。</p>
-<p>Spring Boot 2.x之后默认不再使用<code>server.xml</code>配置，所有Tomcat配置通过<code>application.properties</code>或<code>application.yml</code>完成，如<code>server.tomcat.max-threads</code>、<code>server.tomcat.accept-count</code>等。</p>
-<h2 id="七生产问题排查思路">七、生产问题排查思路</h2>
-<p>12年经验的工程师在面试中一定会被问到实际问题排查，这里梳理几个高频场景：</p>
-<p><strong>CPU 100%</strong>：通常是业务代码死循环、GC频繁（Full GC）、或大量线程上下文切换。排查手段：<code>top -Hp &#x3C;pid></code>找到高CPU线程，<code>jstack</code>导出线程栈，定位具体代码。</p>
-<p><strong>内存泄漏/频繁Full GC</strong>：<code>jmap -histo:live</code>查看对象分布，<code>jmap -dump</code>导出堆快照用MAT分析。Tomcat场景下常见泄漏源包括：ThreadLocal未清理（NIO的Poller线程常驻）、<code>WebappClassLoader</code>未释放导致类无法卸载、数据库连接池泄漏。</p>
-<p><strong>线程阻塞</strong>：<code>jstack</code>分析BLOCKED/WAITING线程。常见原因：数据库慢查询导致线程池耗尽、HttpClient未设超时导致线程等待、锁竞争激烈。一个典型案例是HttpClient请求未设置超时，大量线程在等待响应，最终Tomcat线程池耗尽导致服务不可用。</p>
-<p><strong>502/504错误</strong>：502通常是Tomcat进程崩溃或连接被拒绝（acceptCount队列满），504是Nginx等待Tomcat响应超时。排查方向：Tomcat是否OOM、线程池是否耗尽、后端处理是否超时。</p>
-<h2 id="八面试核心问答要点">八、面试核心问答要点</h2>
-<p><strong>Q：Tomcat的Connector和Container是如何协作的？</strong>
-Connector负责网络通信和协议解析，将Socket字节流转换为Request/Response对象后，通过Adapter调用Container的<code>invoke()</code>方法。Container采用责任链模式，Engine→Host→Context→Wrapper逐层路由，最终执行Filter链和Servlet。这种分离设计使得同一套业务处理逻辑可以服务多种协议。</p>
-<p><strong>Q：为什么Tomcat要打破双亲委派？</strong>
-为了满足Web应用间的类隔离和优先加载需求。标准双亲委派会导致应用无法覆盖父加载器已加载的类，且不同Web应用无法加载同名不同版本的类。Tomcat通过自定义<code>WebappClassLoader</code>，先尝试本地加载再委托父加载器，实现了隔离。但<code>java.*</code>核心类仍然遵循双亲委派以保证安全。</p>
-<p><strong>Q：maxThreads和maxConnections的区别？</strong>
-<code>maxThreads</code>是同时处理请求的最大线程数，决定并发处理能力。<code>maxConnections</code>是允许的最大TCP连接数，决定连接上限。一个TCP连接可能对应多个HTTP请求（Keep-Alive场景），所以<code>maxConnections</code>通常大于<code>maxThreads</code>。当连接数达到<code>maxConnections</code>后，新连接进入<code>acceptCount</code>队列等待。</p>
-<p><strong>Q：Tomcat的NIO模型为什么能支持高并发？</strong>
-核心在于Acceptor-Poller-Executor的三层协作。Acceptor只负责接收连接，Poller通过Selector多路复用监听IO事件，只有读就绪的连接才交给Executor线程处理。这样少量线程就能管理大量连接，避免了BIO“一连接一线程”的资源消耗。</p> </article> <hr class="my-8 border-dashed"> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/tomcat 小谈.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8"> <li> <a href="/tags/tomcat/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-2"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> Tomcat </a> </li><li> <a href="/tags/java/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-3"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> Java </a> </li><li> <a href="/tags/架构/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-4"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 架构 </a> </li><li> <a href="/tags/源码解析/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-5"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 源码解析 </a> </li><li> <a href="/tags/性能调优/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-6"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 性能调优 </a> </li><li> <a href="/tags/并发/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-7"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 并发 </a> </li><li> <a href="/tags/容器/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-8"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 容器 </a> </li> </ul> <div id="btt-btn-container" class="fixed end-4 bottom-8 z-50 md:sticky md:end-auto md:float-end md:me-1 translate-y-14 opacity-0 transition duration-500"> <button data-button="back-to-top" class="group relative bg-background px-2 py-1 size-14 rounded-full shadow-xl md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg"> <span id="progress-indicator" class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"></span> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block rotate-90 md:hidden"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg> <span class="sr-only text-sm group-hover:text-accent md:not-sr-only"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M16 9l-4 -4" /><path d="M8 9l4 -4" /></svg>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>维度</th><th>独立部署</th><th>内嵌部署</th></tr></thead><tbody><tr><td><strong>启动流程</strong></td><td>Tomcat启动 → 扫描WAR → 加载应用</td><td>Spring Boot启动 → 创建Tomcat对象 → 注册Servlet → 启动Tomcat</td></tr><tr><td><strong>类加载器</strong></td><td>多层隔离，<code>WebappClassLoader</code>生效</td><td>单一<code>AppClassLoader</code>，<strong>应用间类隔离失效</strong></td></tr><tr><td><strong>配置方式</strong></td><td><code>server.xml</code>、<code>context.xml</code></td><td><code>application.yml</code> (<code>server.tomcat.*</code>)</td></tr><tr><td><strong>部署单元</strong></td><td>WAR包</td><td>Fat JAR</td></tr></tbody></table>
+<p><strong>内嵌模式注意</strong>：多模块部署时无<code>WebappClassLoader</code>隔离，依赖冲突需自行解决（如Maven BOM、依赖对齐）。</p>
+<hr>
+<h2 id="七请求处理全链路源码视角">七、请求处理全链路（源码视角）</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Client</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  ▼ 1. TCP连接</span></span>
+<span class="line"><span>Acceptor (阻塞 accept)</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  ▼ 2. SocketChannel注册到Poller</span></span>
+<span class="line"><span>Poller (Selector轮询)</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  ▼ 3. OP_READ就绪，封装SocketProcessor</span></span>
+<span class="line"><span>Executor (Worker线程池)</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  ▼ 4. Http11Processor解析HTTP请求行、头、体</span></span>
+<span class="line"><span>CoyoteAdapter.service()</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  ▼ 5. 转换Coyote Request → Catalina Request</span></span>
+<span class="line"><span>Engine Valve → Host Valve → Context Valve → Wrapper Valve</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  ▼ 6. FilterChain → Servlet.service()</span></span>
+<span class="line"><span>业务代码</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  ▼ 7. Response回写</span></span>
+<span class="line"><span>Client</span></span></code></pre>
+<p><strong>核心源码串联</strong>：</p>
+<ul>
+<li><code>NioEndpoint.Poller.run()</code> → <code>SocketProcessor</code> → <code>Http11Processor.process()</code> → <code>CoyoteAdapter.service()</code> → <code>StandardEngineValve.invoke()</code> → <code>StandardHostValve.invoke()</code> → <code>StandardContextValve.invoke()</code> → <code>StandardWrapperValve.invoke()</code> → <code>ApplicationFilterChain.doFilter()</code> → <code>Servlet.service()</code></li>
+</ul>
+<hr>
+<h2 id="八生产问题排查思路">八、生产问题排查思路</h2>
+<h3 id="1-cpu-100">1. CPU 100%</h3>
+<ul>
+<li><strong>原因</strong>：业务死循环、频繁Full GC、大量线程上下文切换</li>
+<li><strong>排查</strong>：<code>top -Hp &#x3C;pid></code>找高CPU线程 → <code>jstack</code>导出栈 → 定位代码行</li>
+</ul>
+<h3 id="2-内存泄漏频繁full-gc">2. 内存泄漏/频繁Full GC</h3>
+<ul>
+<li><strong>工具</strong>：<code>jmap -histo:live</code>对象分布 → <code>jmap -dump</code>堆快照 → MAT分析</li>
+<li><strong>Tomcat常见泄漏源</strong>：ThreadLocal未清理、<code>WebappClassLoader</code>未释放、数据库连接池泄漏</li>
+</ul>
+<h3 id="3-线程阻塞线程池耗尽">3. 线程阻塞/线程池耗尽</h3>
+<ul>
+<li><strong>工具</strong>：<code>jstack</code>分析BLOCKED/WAITING线程</li>
+<li><strong>常见原因</strong>：DB慢查询、HttpClient未设超时、锁竞争激烈</li>
+<li><strong>典型案例</strong>：HttpClient无超时配置 → 大量线程等待响应 → 线程池耗尽 → 服务不可用</li>
+</ul>
+<h3 id="4-502504错误">4. 502/504错误</h3>
+<ul>
+<li><strong>502</strong>：Tomcat进程崩溃/OOM、acceptCount队列满连接被拒</li>
+<li><strong>504</strong>：Nginx等待Tomcat响应超时（<code>proxy_read_timeout</code>）</li>
+<li><strong>排查</strong>：Tomcat日志、GC日志、线程池状态、后端处理耗时</li>
+</ul>
+<hr>
+<h2 id="九面试核心问答速查表">九、面试核心问答速查表</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>问题</th><th>核心考点</th><th>回答要点</th></tr></thead><tbody><tr><td>Tomcat整体架构？</td><td>分层设计</td><td>Coyote(连接器)+Catalina(容器)+Jasper(JSP)，Server→Service→Engine→Host→Context→Wrapper六层容器</td></tr><tr><td>Connector与Container区别？</td><td>职责分离</td><td>Connector管网络I/O，Container管业务逻辑，通过Adapter桥接</td></tr><tr><td>BIO/NIO/NIO2/APR区别？</td><td>I/O模型</td><td>BIO已废弃；NIO默认Selector非阻塞；NIO2异步回调；APR Native极致性能</td></tr><tr><td>Acceptor/Poller/Worker作用？</td><td>线程模型</td><td>Acceptor阻塞accept，Poller多路复用，Worker处理业务，三级解耦</td></tr><tr><td>如何打破双亲委派？</td><td>类加载隔离</td><td>WebappClassLoader优先加载WEB-INF/classes和lib，再委托父；delegate=false默认子优先</td></tr><tr><td>Pipeline-Valve是什么？</td><td>责任链</td><td>每个容器一个Pipeline，串联Valve，最后BasicValve分发到子容器</td></tr><tr><td>Lifecycle作用？</td><td>模板方法</td><td>统一组件生命周期，级联启停，状态机管理</td></tr><tr><td>maxThreads/acceptCount/maxConnections区别？</td><td>参数调优</td><td>maxThreads工作线程数；acceptCount等待队列；maxConnections最大连接数(NIO长连接)</td></tr><tr><td>如何调优到万级并发？</td><td>系统化调优</td><td>垂直调优(线程/JVM/内核)→动静分离→水平扩容→缓存→异步化</td></tr><tr><td>Tomcat内存泄漏常见原因？</td><td>类加载器泄漏</td><td>ThreadLocal未清理、JDBC驱动未注销、非守护线程未停止，热部署时WebappClassLoader无法GC</td></tr><tr><td>嵌入式vs独立Tomcat区别？</td><td>部署形态</td><td>嵌入式随应用启动，版本隔离云原生友好；独立多应用共享容器，运维统一</td></tr><tr><td>如何排查线程阻塞？</td><td>线上排障</td><td>jstack看catalina-exec线程状态；重点关注WAITING/PARKED，查DB/Redis慢调用</td></tr></tbody></table>
+<hr>
+<h2 id="十架构演进从单机到万级并发">十、架构演进：从单机到万级并发</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>单机 200 并发</span></span>
+<span class="line"><span>  ↓ 垂直调优：线程池 + JVM(G1/ZGC) + 系统参数(ulimit/net.core.somaxconn) → 2000 并发</span></span>
+<span class="line"><span>  ↓ 动静分离：Nginx静态资源 + Tomcat动态请求</span></span>
+<span class="line"><span>  ↓ 水平扩容：Nginx负载均衡 + 多Tomcat实例</span></span>
+<span class="line"><span>  ↓ 缓存分层：Redis分布式缓存 + 本地Caffeine热点缓存</span></span>
+<span class="line"><span>  ↓ 异步化：Servlet 3.0 Async + CompletableFuture / Virtual Threads</span></span>
+<span class="line"><span>  → 万级并发</span></span></code></pre>
+<p><strong>Nginx关键配置</strong>：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="nginx"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">upstream</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> tomcat_cluster {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">    server</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 10.0.0.1:8080 </span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0">max_fails</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">3</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> fail_timeout=30s;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">    server</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> 10.0.0.2:8080 </span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0">max_fails</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">=</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">3</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> fail_timeout=30s;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">    keepalive </span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">64</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 长连接复用</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">server</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">    location</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> / {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">        proxy_pass </span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">http://tomcat_cluster;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">        proxy_http_version </span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">1.1</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">        proxy_set_header </span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">Connection </span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">""</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">        proxy_connect_timeout </span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">2s</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">        proxy_read_timeout </span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">5s</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">        proxy_next_upstream </span><span style="--shiki-light:#1976D2;--shiki-dark:#82AAFF">error</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> timeout http_500;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">    location</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> ~*</span><span style="--shiki-light:#22863A;--shiki-dark:#5CA7E4"> \.(jpg|css|js|png)$ </span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">{</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">        expires </span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">7d</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 静态资源Nginx直接服务，不进Tomcat</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<hr>
+<h2 id="十一核心源码阅读路线图">十一、核心源码阅读路线图</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>1. 启动流程</span></span>
+<span class="line"><span>   Bootstrap.main() → Catalina.load/start() → StandardServer → StandardService → Connector/Engine</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>2. 连接器</span></span>
+<span class="line"><span>   Connector → ProtocolHandler(Http11NioProtocol) → AbstractEndpoint(NioEndpoint)</span></span>
+<span class="line"><span>   → Acceptor / Poller / SocketProcessor</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>3. 容器层级</span></span>
+<span class="line"><span>   ContainerBase → StandardEngine/Host/Context/Wrapper → LifecycleBase统一生命周期</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>4. 责任链</span></span>
+<span class="line"><span>   Pipeline → StandardPipeline → Valve</span></span>
+<span class="line"><span>   → StandardEngineValve → StandardHostValve → StandardContextValve → StandardWrapperValve</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>5. 类加载器</span></span>
+<span class="line"><span>   WebappClassLoaderBase → ParallelWebappClassLoader → ApplicationContext → WebappLoader</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>6. 请求处理</span></span>
+<span class="line"><span>   CoyoteAdapter.service() → Engine.invoke() → ApplicationFilterChain → Servlet.service()</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>7. 会话管理</span></span>
+<span class="line"><span>   ManagerBase → StandardManager → PersistentManager → Session → StandardSession</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>8. 工具链</span></span>
+<span class="line"><span>   Tomcat.util.net.* (网络) / Tomcat.util.threads.* (线程) / Tomcat.util.scan.* (扫描)</span></span></code></pre>
+<p><strong>调试技巧</strong>：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 远程调试</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478">JPDA_ADDRESS</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">8000</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> JPDA_TRANSPORT</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">dt_socket</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> ./catalina.sh</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> jpda</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> start</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># IDEA配置Remote JVM Debug，端口8000</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 关键断点</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - NioEndpoint.Acceptor.run()</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - NioEndpoint.Poller.run()</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - CoyoteAdapter.service()</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - StandardWrapperValve.invoke()</span></span></code></pre>
+<hr>
+<h2 id="十二压测基准参考供参考">十二、压测基准参考（供参考）</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="text"><code><span class="line"><span>环境：4核8G，JDK 21，Tomcat 10.1，NIO，maxThreads=400</span></span>
+<span class="line"><span>接口：简单JSON返回，无DB</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>并发 200： QPS 8500,  P99 45ms,  CPU 45%, 无拒绝</span></span>
+<span class="line"><span>并发 1000： QPS 12000, P99 110ms, CPU 75%, 无拒绝</span></span>
+<span class="line"><span>并发 5000： QPS 13500, P99 280ms, CPU 85%, 拒绝率 0.1%（队列满）</span></span>
+<span class="line"><span>并发 10000：QPS 13000, P99 600ms, CPU 90%, 拒绝率 1.2%</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>结论：单机4C8G的Tomcat极限约5000并发，QPS 1.3w</span></span>
+<span class="line"><span>      超过需水平扩容，而非一味增大maxThreads</span></span></code></pre>
+<hr>
+<h2 id="十三参考与推荐阅读">十三、参考与推荐阅读</h2>
+<ul>
+<li><strong>源码</strong>：Apache Tomcat 10.1.x / 9.0.x (<code>org.apache.catalina</code> / <code>org.apache.coyote</code> / <code>org.apache.tomcat.util.net</code>)</li>
+<li><strong>官方文档</strong>：<a href="https://tomcat.apache.org/tomcat-10.1-doc/">https://tomcat.apache.org/tomcat-10.1-doc/</a></li>
+<li><strong>经典书籍</strong>：《How Tomcat Works》(Budi Kurniawan) —— Tomcat 4/5经典，原理不过时</li>
+<li><strong>国内实战</strong>：《Tomcat 架构解析》（刘光瑞）—— 贴合国产实战</li>
+<li><strong>源码必读类</strong>：<code>NioEndpoint</code> / <code>CoyoteAdapter</code> / <code>StandardWrapperValve</code> / <code>WebappClassLoaderBase</code> / <code>TaskQueue</code></li>
+</ul>
+<hr>
+<blockquote>
+<p><strong>更新于 2026-09-15</strong> | 持续补充中…</p>
+<p>这篇文章是对Tomcat核心机制的系统性梳理，配合《Tomcat 架构原理与性能调优深度解析》一起阅读效果更佳。前者侧重全景架构与源码深度，后者侧重工程实践与调优落地，两者互补。</p>
+</blockquote> </article> <hr class="my-8 border-dashed"> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/tomcat 小谈.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8"> <li> <a href="/tags/tomcat/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-2"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> Tomcat </a> </li><li> <a href="/tags/java/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-3"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> Java </a> </li><li> <a href="/tags/架构/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-4"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 架构 </a> </li><li> <a href="/tags/源码解析/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-5"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 源码解析 </a> </li><li> <a href="/tags/性能调优/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-6"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 性能调优 </a> </li><li> <a href="/tags/并发/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-7"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 并发 </a> </li><li> <a href="/tags/容器/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-8"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 容器 </a> </li> </ul> <div id="btt-btn-container" class="fixed end-4 bottom-8 z-50 md:sticky md:end-auto md:float-end md:me-1 translate-y-14 opacity-0 transition duration-500"> <button data-button="back-to-top" class="group relative bg-background px-2 py-1 size-14 rounded-full shadow-xl md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg"> <span id="progress-indicator" class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"></span> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block rotate-90 md:hidden"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg> <span class="sr-only text-sm group-hover:text-accent md:not-sr-only"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M16 9l-4 -4" /><path d="M8 9l4 -4" /></svg>
 Back To Top
 </span> </button> </div> <script data-astro-rerun>
   /** Scrolls the document to the top when
