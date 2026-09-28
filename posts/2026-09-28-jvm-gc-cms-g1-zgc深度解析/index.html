@@ -1,0 +1,1706 @@
+<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="canonical" href="https://henuhaigang.github.io/posts/2026-09-28-jvm-gc-cms-g1-zgc%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/"><meta name="generator" content="Astro v5.16.6"><!-- General Meta Tags --><title>JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 | scorpion&#39;s blog</title><meta name="title" content="JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 | scorpion's blog"><meta name="description" content="JVM垃圾回收器深度解析：从GC基础原理到CMS/G1/ZGC三大回收器的工作机制、源码级细节、优缺点、调优实战与选型决策，适合从入门到12年经验的开发者"><meta name="author" content="henuhaigang"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 | scorpion's blog"><meta property="og:description" content="JVM垃圾回收器深度解析：从GC基础原理到CMS/G1/ZGC三大回收器的工作机制、源码级细节、优缺点、调优实战与选型决策，适合从入门到12年经验的开发者"><meta property="og:url" content="https://henuhaigang.github.io/posts/2026-09-28-jvm-gc-cms-g1-zgc%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/"><meta property="og:image" content="https://henuhaigang.github.io/posts/2026-09-28-jvm-gc-cms-g1-zgc%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/index.png"><!-- Article Published/Modified time --><meta property="article:published_time" content="2026-09-28T10:00:00.000Z"><meta property="article:modified_time" content="2026-09-28T10:00:00.000Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://henuhaigang.github.io/posts/2026-09-28-jvm-gc-cms-g1-zgc%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/"><meta property="twitter:title" content="JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 | scorpion's blog"><meta property="twitter:description" content="JVM垃圾回收器深度解析：从GC基础原理到CMS/G1/ZGC三大回收器的工作机制、源码级细节、优缺点、调优实战与选型决策，适合从入门到12年经验的开发者"><meta property="twitter:image" content="https://henuhaigang.github.io/posts/2026-09-28-jvm-gc-cms-g1-zgc%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/index.png"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 | scorpion's blog","image":"https://henuhaigang.github.io/posts/2026-09-28-jvm-gc-cms-g1-zgc%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/index.png","datePublished":"2026-09-28T10:00:00.000Z","dateModified":"2026-09-28T10:00:00.000Z","author":[{"@type":"Person","name":"henuhaigang","url":"https://github.com/henuhaigang"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="scorpion's blog" href="https://henuhaigang.github.io/rss.xml"><meta name="theme-color" content=""><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.QW52Ox2j.js"></script><script src="/toggle-theme.js"></script><link rel="stylesheet" href="/_astro/about.BVNVd-UD.css">
+<style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media(prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
+:where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
+</style><style>[data-astro-transition-scope="astro-fam6wyqg-1"] { view-transition-name: jvm-gc-\6DF1\5EA6\89E3\6790\FF1A cm-s\3001-g-1-\3001zgc-\539F\7406\3001\4F18\52A3\4E0E\9009\578B\6307\5357; }@layer astro { ::view-transition-old(jvm-gc-\6DF1\5EA6\89E3\6790\FF1A cm-s\3001-g-1-\3001zgc-\539F\7406\3001\4F18\52A3\4E0E\9009\578B\6307\5357) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(jvm-gc-\6DF1\5EA6\89E3\6790\FF1A cm-s\3001-g-1-\3001zgc-\539F\7406\3001\4F18\52A3\4E0E\9009\578B\6307\5357) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(jvm-gc-\6DF1\5EA6\89E3\6790\FF1A cm-s\3001-g-1-\3001zgc-\539F\7406\3001\4F18\52A3\4E0E\9009\578B\6307\5357) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(jvm-gc-\6DF1\5EA6\89E3\6790\FF1A cm-s\3001-g-1-\3001zgc-\539F\7406\3001\4F18\52A3\4E0E\9009\578B\6307\5357) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-2"] { view-transition-name: jvm; }@layer astro { ::view-transition-old(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-3"] { view-transition-name: gc; }@layer astro { ::view-transition-old(gc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(gc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(gc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(gc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-4"] { view-transition-name: cms; }@layer astro { ::view-transition-old(cms) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(cms) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(cms) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(cms) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-5"] { view-transition-name: g-1; }@layer astro { ::view-transition-old(g-1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(g-1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(g-1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(g-1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-5"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-5"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-5"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-5"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-5"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-5"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-5"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-5"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-6"] { view-transition-name: zgc; }@layer astro { ::view-transition-old(zgc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(zgc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(zgc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(zgc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-6"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-6"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-6"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-6"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-6"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-6"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-6"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-6"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-7"] { view-transition-name: \6027\80FD\8C03\4F18; }@layer astro { ::view-transition-old(\6027\80FD\8C03\4F18) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(\6027\80FD\8C03\4F18) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(\6027\80FD\8C03\4F18) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(\6027\80FD\8C03\4F18) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-7"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-7"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-7"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-7"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-7"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-7"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-7"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-7"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-8"] { view-transition-name: java; }@layer astro { ::view-transition-old(java) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(java) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(java) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(java) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-8"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-8"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-8"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-8"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-8"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-8"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-8"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-8"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style></head> <body data-astro-cid-sckkx6r4>  <a id="skip-to-content" href="#main-content" class="absolute start-16 -top-full z-50 bg-background px-3 py-2 text-accent backdrop-blur-lg transition-all focus:top-4">
+Skip to content
+</a> <header class="app-layout flex flex-col items-center justify-between sm:flex-row"> <div id="top-nav-wrap" class="py-4 sm:py-6 border-b border-border relative w-full bg-background flex items-baseline justify-between sm:items-center"> <a href="/" class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"> scorpion&#39;s blog </a> <nav id="nav-menu" class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"> <button id="menu-btn" class="focus-outline self-end p-2 sm:hidden" aria-label="Open Menu" aria-expanded="false" aria-controls="menu-items"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden" id="close-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-menu-deep" id="menu-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6h16" /><path d="M7 12h13" /><path d="M10 18h10" /></svg> </button> <ul id="menu-items" class="mt-4 grid w-44 grid-cols-2 place-content-center gap-2 [&#38;>li>a]:block [&#38;>li>a]:px-4 [&#38;>li>a]:py-3 [&#38;>li>a]:text-center [&#38;>li>a]:font-medium [&#38;>li>a]:hover:text-accent sm:[&#38;>li>a]:px-2 sm:[&#38;>li>a]:py-1 hidden sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0"> <li class="col-span-2"> <a href="/posts" class="active-nav">
+Posts
+</a> </li> <li class="col-span-2"> <a href="/tags">
+Tags
+</a> </li> <li class="col-span-2"> <a href="/about">
+About
+</a> </li> <li class="col-span-2"> <a href="/archives" title="Archives" aria-label="archives" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex justify-center p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden sm:inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" /><path d="M10 12l4 0" /></svg> <span class="sm:sr-only">Archives</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <a href="/search" title="Search" aria-label="search" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg> <span class="sr-only">Search</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <button id="theme-btn" class="focus-outline relative size-12 p-4 sm:size-8 hover:[&>svg]:stroke-accent" title="Toggles light & dark" aria-label="auto" aria-live="polite"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg> </button> </li> </ul> </nav> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <div class="app-layout flex items-center justify-start"><a id="back-button" href="/" class="group inline-flex items-center gap-1 hover:text-accent focus-outline -ms-2 mt-8 mb-2 hover:text-foreground/75"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg><span>Go back</span> </a></div><script type="module">function o(){const t=document.querySelector("#back-button"),e=sessionStorage.getItem("backUrl");e&&t&&(t.href=e)}document.addEventListener("astro:page-load",o);o();</script> <main id="main-content" class="app-layout pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl" data-astro-transition-scope="astro-fam6wyqg-1"> JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2026-09-28T10:00:00.000Z">28 Sep, 2026</time> </div> <span aria-hidden="true" class="max-sm:hidden">|</span> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/2026-09-28-JVM-GC-CMS-G1-ZGC深度解析.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent max-sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> </div> <article id="article" class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <h1 id="jvm-gc-深度解析cmsg1zgc-原理优劣与选型指南">JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南</h1>
+<h2 id="一为什么需要理解gc">一、为什么需要理解GC</h2>
+<h3 id="11-gc对生产环境的影响">1.1 GC对生产环境的影响</h3>
+<p>GC（Garbage Collection）是Java的核心机制之一，但也是生产环境性能问题的常见根源：</p>
+<ul>
+<li><strong>STW（Stop-The-World）</strong>：GC期间所有应用线程暂停，直接影响响应时间</li>
+<li><strong>内存泄漏</strong>：对象无法被回收，最终OOM</li>
+<li><strong>频繁Full GC</strong>：老年代回收过于频繁，服务周期性卡顿</li>
+<li><strong>延迟毛刺</strong>：GC暂停导致P99/P999延迟飙升</li>
+</ul>
+<blockquote>
+<p><strong>12年经验一句话</strong>：GC调优不是玄学，而是基于对回收器原理的理解，结合业务场景（吞吐量 vs 延迟 vs 内存占用）做出合理选择。</p>
+</blockquote>
+<h3 id="12-gc调优的核心目标">1.2 GC调优的核心目标</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>目标</th><th>说明</th><th>适用场景</th></tr></thead><tbody><tr><td><strong>高吞吐量</strong></td><td>GC时间占比低，应用运行时间长</td><td>批处理、离线计算</td></tr><tr><td><strong>低延迟</strong></td><td>GC暂停时间短且可预测</td><td>在线服务、实时交易</td></tr><tr><td><strong>低内存占用</strong></td><td>堆外内存少，资源利用率高</td><td>容器化部署、内存受限环境</td></tr></tbody></table>
+<p><strong>三者不可兼得</strong>，需要根据业务特点取舍。</p>
+<h3 id="13-gc调优的常见误区">1.3 GC调优的常见误区</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>误区</th><th>真相</th></tr></thead><tbody><tr><td>”堆内存越大越好”</td><td>堆越大，单次GC时间越长，STW越久</td></tr><tr><td>”GC次数越少越好”</td><td>关注的是GC总时间和单次最长时间，而非次数</td></tr><tr><td>”默认配置就是最优”</td><td>默认配置适合大多数场景，但特殊场景需要调优</td></tr><tr><td>”GC调优可以解决所有性能问题”</td><td>很多性能问题是代码问题，GC调优治标不治本</td></tr><tr><td>”Full GC一定是坏事”</td><td>偶发的Full GC是正常的，频繁Full GC才是问题</td></tr></tbody></table>
+<hr>
+<h2 id="二gc基础新人必读">二、GC基础：新人必读</h2>
+<h3 id="21-堆内存结构">2.1 堆内存结构</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>┌─────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│                      Heap Memory                         │</span></span>
+<span class="line"><span>│  ┌─────────────────────┐  ┌─────────────────────────┐   │</span></span>
+<span class="line"><span>│  │      Young Gen       │  │       Old Gen            │   │</span></span>
+<span class="line"><span>│  │  ┌─────┬─────┬────┐ │  │                         │   │</span></span>
+<span class="line"><span>│  │  │Eden │ S0  │ S1 │ │  │    Tenured Space        │   │</span></span>
+<span class="line"><span>│  │  │     │     │    │ │  │                         │   │</span></span>
+<span class="line"><span>│  │  └─────┴─────┴────┘ │  └─────────────────────────┘   │</span></span>
+<span class="line"><span>│  └─────────────────────┘                                │</span></span>
+<span class="line"><span>└─────────────────────────────────────────────────────────┘</span></span></code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>区域</th><th>说明</th><th>默认比例</th></tr></thead><tbody><tr><td><strong>Eden</strong></td><td>新对象分配区域</td><td>8</td></tr><tr><td><strong>Survivor 0/1</strong></td><td>Minor GC后存活对象</td><td>各1</td></tr><tr><td><strong>Old Gen</strong></td><td>长期存活对象</td><td>2</td></tr></tbody></table>
+<h3 id="22-对象生命周期与晋升">2.2 对象生命周期与晋升</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>新对象 → Eden → Minor GC → Survivor → 年龄达标 → Old Gen → Full GC</span></span>
+<span class="line"><span>                ↓</span></span>
+<span class="line"><span>            (年龄+1)</span></span></code></pre>
+<p><strong>晋升规则</strong>：</p>
+<ul>
+<li>对象每经历一次Minor GC，年龄+1</li>
+<li>年龄达到阈值（默认15）晋升到老年代</li>
+<li>大对象直接进入老年代（<code>-XX:PretenureSizeThreshold</code>）</li>
+<li>动态年龄判断：Survivor中相同年龄对象总和超过Survivor空间一半，该年龄及以上对象直接晋升</li>
+</ul>
+<h3 id="23-如何判断对象可回收">2.3 如何判断对象可回收</h3>
+<p><strong>引用计数法</strong>（Java未采用）：</p>
+<ul>
+<li>优点：实现简单，回收及时</li>
+<li>缺点：无法解决循环引用</li>
+</ul>
+<p><strong>可达性分析</strong>（Java采用）：</p>
+<ul>
+<li>GC Roots：栈帧局部变量、静态变量、常量、JNI引用等</li>
+<li>从GC Roots不可达的对象可回收</li>
+</ul>
+<h3 id="24-四种引用类型">2.4 四种引用类型</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>引用类型</th><th>回收时机</th><th>典型用途</th></tr></thead><tbody><tr><td><strong>强引用</strong></td><td>永不回收（除非置null）</td><td>普通对象 <code>Object obj = new Object()</code></td></tr><tr><td><strong>软引用</strong></td><td>内存不足时回收</td><td>缓存 <code>SoftReference&#x3C;T></code></td></tr><tr><td><strong>弱引用</strong></td><td>下次GC必回收</td><td><code>WeakHashMap</code>、ThreadLocal</td></tr><tr><td><strong>虚引用</strong></td><td>随时可回收，仅用于感知回收</td><td>堆外内存管理 <code>PhantomReference</code></td></tr></tbody></table>
+<h3 id="25-gc-roots详解">2.5 GC Roots详解</h3>
+<p>GC Roots是可达性分析的起点，包括：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>类型</th><th>说明</th><th>示例</th></tr></thead><tbody><tr><td><strong>栈帧局部变量</strong></td><td>方法内的局部变量</td><td><code>Object obj = new Object()</code></td></tr><tr><td><strong>静态变量</strong></td><td>类的静态字段</td><td><code>static Object obj</code></td></tr><tr><td><strong>常量</strong></td><td>静态final字段</td><td><code>static final Object obj</code></td></tr><tr><td><strong>JNI引用</strong></td><td>Native代码引用的Java对象</td><td>JNI回调中的对象</td></tr><tr><td><strong>活跃线程</strong></td><td>正在运行的线程对象</td><td><code>Thread.currentThread()</code></td></tr><tr><td><strong>类加载器</strong></td><td>已加载的类加载器</td><td><code>ClassLoader</code></td></tr><tr><td><strong>基本类型对应的Class</strong></td><td>基本类型的Class对象</td><td><code>int.class</code></td></tr></tbody></table>
+<h3 id="26-对象分配策略">2.6 对象分配策略</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>策略</th><th>说明</th><th>适用场景</th></tr></thead><tbody><tr><td><strong>指针碰撞</strong></td><td>内存规整，移动指针分配</td><td>标记-整理、复制算法</td></tr><tr><td><strong>空闲列表</strong></td><td>内存不规整，从列表分配</td><td>标记-清除</td></tr><tr><td><strong>TLAB</strong></td><td>线程本地分配缓冲区</td><td>多线程环境，减少竞争</td></tr><tr><td><strong>栈上分配</strong></td><td>对象不逃逸，栈上分配</td><td>逃逸分析优化</td></tr></tbody></table>
+<hr>
+<h2 id="三gc算法基础">三、GC算法基础</h2>
+<h3 id="31-标记-清除mark-sweep">3.1 标记-清除（Mark-Sweep）</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>标记阶段：从GC Roots标记所有存活对象</span></span>
+<span class="line"><span>清除阶段：回收未标记对象</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>优点：实现简单</span></span>
+<span class="line"><span>缺点：内存碎片、效率随对象数量下降</span></span></code></pre>
+<h3 id="32-标记-复制mark-copy">3.2 标记-复制（Mark-Copy）</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>将内存分为两块，每次只用一块</span></span>
+<span class="line"><span>GC时复制存活对象到另一块，清空当前块</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>优点：无碎片、分配快（指针碰撞）</span></span>
+<span class="line"><span>缺点：内存利用率50%、存活率高时效率低</span></span>
+<span class="line"><span>应用：新生代（Eden + Survivor）</span></span></code></pre>
+<h3 id="33-标记-整理mark-compact">3.3 标记-整理（Mark-Compact）</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>标记阶段：标记存活对象</span></span>
+<span class="line"><span>整理阶段：存活对象向一端移动，清理边界外内存</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>优点：无碎片、内存利用率高</span></span>
+<span class="line"><span>缺点：整理阶段耗时、需要移动对象</span></span>
+<span class="line"><span>应用：老年代（CMS的备选方案）</span></span></code></pre>
+<h3 id="34-分代收集generational-collection">3.4 分代收集（Generational Collection）</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>基于"弱分代假说"：绝大多数对象朝生夕灭</span></span>
+<span class="line"><span>新生代：复制算法（存活率低）</span></span>
+<span class="line"><span>老年代：标记-清除或标记-整理（存活率高）</span></span></code></pre>
+<h3 id="35-增量收集与并发收集">3.5 增量收集与并发收集</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>方式</th><th>说明</th><th>优点</th><th>缺点</th></tr></thead><tbody><tr><td><strong>增量收集</strong></td><td>分多次完成GC</td><td>单次STW短</td><td>总GC时间长</td></tr><tr><td><strong>并发收集</strong></td><td>GC与用户线程并发</td><td>STW短</td><td>CPU开销大、实现复杂</td></tr></tbody></table>
+<hr>
+<h2 id="四cmsconcurrent-mark-sweep">四、CMS（Concurrent Mark Sweep）</h2>
+<h3 id="41-概述">4.1 概述</h3>
+<p>CMS是JDK 1.4引入的老年代收集器，<strong>以获取最短回收停顿时间为目标</strong>，是互联网早期（JDK 5-8时代）的主流选择。</p>
+<blockquote>
+<p><strong>现状</strong>：JDK 9标记为废弃（Deprecated），JDK 14移除。但理解CMS对理解G1/ZGC的演进至关重要。</p>
+</blockquote>
+<h3 id="42-工作流程4个阶段">4.2 工作流程（4个阶段）</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>┌─────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│                    CMS 执行流程                              │</span></span>
+<span class="line"><span>│                                                             │</span></span>
+<span class="line"><span>│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌────────┐ │</span></span>
+<span class="line"><span>│  │ 初始标记  │ → │ 并发标记  │ → │ 重新标记  │ → │ 并发清除│ │</span></span>
+<span class="line"><span>│  │ (STW)    │    │ (并发)   │    │ (STW)    │    │ (并发) │ │</span></span>
+<span class="line"><span>│  │ 极短     │    │ 耗时最长  │    │ 较短     │    │ 并发  │ │</span></span>
+<span class="line"><span>│  └──────────┘    └──────────┘    └──────────┘    └────────┘ │</span></span>
+<span class="line"><span>│                                                             │</span></span>
+<span class="line"><span>│  仅标记GC Roots      遍历整个对象图      修正并发标记期间    回收垃圾  │</span></span>
+<span class="line"><span>│  直接关联的对象      但可与用户线程并发   用户线程变动的对象   与用户并发│</span></span>
+<span class="line"><span>└─────────────────────────────────────────────────────────────┘</span></span></code></pre>
+<p><strong>阶段详解</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>阶段</th><th>是否STW</th><th>耗时</th><th>说明</th></tr></thead><tbody><tr><td><strong>初始标记</strong></td><td>是</td><td>极短</td><td>仅标记GC Roots直接关联的对象</td></tr><tr><td><strong>并发标记</strong></td><td>否</td><td>最长</td><td>从GC Roots遍历整个对象图，与用户线程并发</td></tr><tr><td><strong>重新标记</strong></td><td>是</td><td>较短</td><td>修正并发标记期间用户线程导致变动的对象</td></tr><tr><td><strong>并发清除</strong></td><td>否</td><td>较长</td><td>清除垃圾对象，与用户线程并发</td></tr></tbody></table>
+<h3 id="43-cms的核心参数">4.3 CMS的核心参数</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 启用CMS</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseConcMarkSweepGC</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 老年代使用阈值（默认68%，JDK6后92%）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:CMSInitiatingOccupancyFraction</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=70</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 启用CMSInitiatingOccupancyFraction必须配合此参数</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseCMSInitiatingOccupancyOnly</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 并发GC线程数（默认 (ParallelGCThreads+3)/4）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:ConcGCThreads</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=4</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># Full GC后是否进行内存整理（默认true）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseCMSCompactAtFullCollection</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 多少次Full GC后进行一次整理（默认0，即每次）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:CMSFullGCsBeforeCompaction</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=1</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 并行Full GC线程数</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:ParallelCMSThreads</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=4</span></span></code></pre>
+<h3 id="44-cms的三大缺点">4.4 CMS的三大缺点</h3>
+<h4 id="缺点1内存碎片memory-fragmentation">缺点1：内存碎片（Memory Fragmentation）</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>并发清除后：</span></span>
+<span class="line"><span>┌─────────────────────────────────────────┐</span></span>
+<span class="line"><span>│ ████    ████        ████    ████        │</span></span>
+<span class="line"><span>│ 存活   垃圾       存活   垃圾          │</span></span>
+<span class="line"><span>│ 对象   空间       对象   空间          │</span></span>
+<span class="line"><span>└─────────────────────────────────────────┘</span></span>
+<span class="line"><span>问题：无法分配大对象，触发Full GC</span></span></code></pre>
+<p><strong>解决方案</strong>：<code>-XX:+UseCMSCompactAtFullCollection</code>（Full GC时整理）</p>
+<h4 id="缺点2浮动垃圾floating-garbage">缺点2：浮动垃圾（Floating Garbage）</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>并发清除阶段：</span></span>
+<span class="line"><span>用户线程继续运行 → 产生新垃圾 → 本次GC无法回收</span></span>
+<span class="line"><span>必须等待下一次GC</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>解决方案：预留空间（CMSInitiatingOccupancyFraction）</span></span></code></pre>
+<h4 id="缺点3concurrent-mode-failure">缺点3：Concurrent Mode Failure</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>场景：并发清除期间，老年代空间不足</span></span>
+<span class="line"><span>后果：触发Serial Old收集器（单线程Full GC）</span></span>
+<span class="line"><span>       → 长时间STW → 服务不可用</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>触发条件：</span></span>
+<span class="line"><span>1. 老年代空间不足（浮动垃圾过多）</span></span>
+<span class="line"><span>2. 大对象分配失败</span></span>
+<span class="line"><span>3. 内存碎片导致无法分配</span></span></code></pre>
+<h3 id="45-cms调优实战">4.5 CMS调优实战</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 典型CMS配置（JDK 8）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseConcMarkSweepGC</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseCMSInitiatingOccupancyOnly</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:CMSInitiatingOccupancyFraction</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=70</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseCMSCompactAtFullCollection</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:CMSFullGCsBeforeCompaction</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=1</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+CMSParallelInitialMarkEnabled</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+CMSScavengeBeforeRemark</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+ParallelRefProcEnabled</span></span></code></pre>
+<p><strong>调优要点</strong>：</p>
+<ol>
+<li><code>CMSInitiatingOccupancyFraction</code>：设置过低→频繁Full GC；过高→Concurrent Mode Failure</li>
+<li><code>CMSScavengeBeforeRemark</code>：重新标记前先做Minor GC，减少重新标记时间</li>
+<li><code>ParallelRefProcEnabled</code>：并行处理引用对象，减少重新标记时间</li>
+</ol>
+<h3 id="46-cms源码级细节">4.6 CMS源码级细节</h3>
+<h4 id="461-并发标记的三色标记法">4.6.1 并发标记的三色标记法</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>白色：未访问（GC后仍为白色 → 可回收）</span></span>
+<span class="line"><span>灰色：已访问但引用的对象未完全扫描</span></span>
+<span class="line"><span>黑色：已访问且引用的对象已完全扫描</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>并发标记过程：</span></span>
+<span class="line"><span>1. GC Roots标记为灰色</span></span>
+<span class="line"><span>2. 取出灰色对象，标记为黑色，其引用的对象标记为灰色</span></span>
+<span class="line"><span>3. 重复步骤2，直到没有灰色对象</span></span>
+<span class="line"><span>4. 剩余白色对象可回收</span></span></code></pre>
+<h4 id="462-写屏障维护并发标记">4.6.2 写屏障维护并发标记</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>用户线程修改引用时：</span></span>
+<span class="line"><span>ObjectA.field = ObjectB</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>写屏障（伪代码）：</span></span>
+<span class="line"><span>void writeBarrier(Object obj, Object value) {</span></span>
+<span class="line"><span>    if (isMarking &#x26;&#x26; isWhite(value)) {</span></span>
+<span class="line"><span>        markGray(value);  // 标记为灰色</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    obj.field = value;</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<hr>
+<h2 id="五g1garbage-first">五、G1（Garbage First）</h2>
+<h3 id="51-概述">5.1 概述</h3>
+<p>G1是JDK 7引入的收集器，<strong>JDK 9成为默认GC</strong>。它开创了”面向局部收集”和”可预测停顿时间”的设计思路，是<strong>大堆内存（6GB+）的首选</strong>。</p>
+<blockquote>
+<p><strong>设计目标</strong>：在延迟可控的情况下，尽可能提高吞吐量，同时简化GC调优。</p>
+</blockquote>
+<h3 id="52-g1的核心创新region化">5.2 G1的核心创新：Region化</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>传统分代：</span></span>
+<span class="line"><span>┌─────────────────────────────────────────┐</span></span>
+<span class="line"><span>│  Young Gen (连续)  │  Old Gen (连续)     │</span></span>
+<span class="line"><span>└─────────────────────────────────────────┘</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>G1 Region化：</span></span>
+<span class="line"><span>┌────┬────┬────┬────┬────┬────┬────┬────┐</span></span>
+<span class="line"><span>│ E  │ E  │ S  │ O  │ O  │ H  │ E  │ O  │</span></span>
+<span class="line"><span>├────┼────┼────┼────┼────┼────┼────┼────┤</span></span>
+<span class="line"><span>│ O  │ H  │ E  │ O  │ S  │ O  │ H  │ E  │</span></span>
+<span class="line"><span>└────┴────┴────┴────┴────┴────┴────┴────┘</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>E = Eden    S = Survivor    O = Old    H = Humongous</span></span></code></pre>
+<p><strong>Region特点</strong>：</p>
+<ul>
+<li>每个Region大小1-32MB（2的幂次）</li>
+<li>逻辑上分代，物理上不连续</li>
+<li>大对象（>Region 50%）进入Humongous Region</li>
+<li>最多约2048个Region（堆大小/Region大小）</li>
+</ul>
+<h3 id="53-g1的工作流程">5.3 G1的工作流程</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>┌─────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│                    G1 执行流程                               │</span></span>
+<span class="line"><span>│                                                             │</span></span>
+<span class="line"><span>│  ┌──────────┐    ┌──────────┐    ┌──────────────────────┐   │</span></span>
+<span class="line"><span>│  │ 初始标记  │ → │ 并发标记  │ → │    混合回收           │   │</span></span>
+<span class="line"><span>│  │ (STW)    │    │ (并发)   │    │ (Mixed GC)           │   │</span></span>
+<span class="line"><span>│  │ 借用Minor│    │ 遍历对象图│    │ 回收整个Young + 部分Old│  │</span></span>
+<span class="line"><span>│  └──────────┘    └──────────┘    └──────────────────────┘   │</span></span>
+<span class="line"><span>│                                                             │</span></span>
+<span class="line"><span>│  ┌──────────────────────────────────────────────────────┐   │</span></span>
+<span class="line"><span>│  │ 可选：Full GC（G1失败时退化为Serial Old）              │   │</span></span>
+<span class="line"><span>│  └──────────────────────────────────────────────────────┘   │</span></span>
+<span class="line"><span>└─────────────────────────────────────────────────────────────┘</span></span></code></pre>
+<p><strong>阶段详解</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>阶段</th><th>是否STW</th><th>说明</th></tr></thead><tbody><tr><td><strong>初始标记</strong></td><td>是</td><td>标记GC Roots直接关联对象，借用Minor GC的STW</td></tr><tr><td><strong>并发标记</strong></td><td>否</td><td>从GC Roots遍历对象图，计算存活率</td></tr><tr><td><strong>最终标记</strong></td><td>是</td><td>处理SATB（Snapshot-At-The-Beginning）记录的引用变化</td></tr><tr><td><strong>筛选回收</strong></td><td>是</td><td>根据回收价值排序，选择Region进行回收</td></tr></tbody></table>
+<h3 id="54-g1的核心机制">5.4 G1的核心机制</h3>
+<h4 id="541-satbsnapshot-at-the-beginning">5.4.1 SATB（Snapshot-At-The-Beginning）</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>并发标记开始时：</span></span>
+<span class="line"><span>┌─────────────────────────────────────────┐</span></span>
+<span class="line"><span>│ 对象A → 对象B → 对象C                   │</span></span>
+<span class="line"><span>└─────────────────────────────────────────┘</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>并发标记期间，用户线程修改：</span></span>
+<span class="line"><span>┌─────────────────────────────────────────┐</span></span>
+<span class="line"><span>│ 对象A → 对象C（B被断开）                 │</span></span>
+<span class="line"><span>└─────────────────────────────────────────┘</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>SATB保证：</span></span>
+<span class="line"><span>- 标记开始时存活的对象，本次GC不回收</span></span>
+<span class="line"><span>- 新分配的对象标记为存活</span></span>
+<span class="line"><span>- 被断开的对象B：如果标记开始时存活，本次不回收（浮动垃圾）</span></span></code></pre>
+<h4 id="542-记忆集remembered-set--rset">5.4.2 记忆集（Remembered Set / RSet）</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>问题：如何判断老年代对象引用新生代对象？</span></span>
+<span class="line"><span>解决：每个Region维护一个RSet，记录"谁引用了我"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>┌─────────┐         ┌─────────┐</span></span>
+<span class="line"><span>│ Old R1  │ ──────► │ Young R2│</span></span>
+<span class="line"><span>│         │  引用    │  RSet   │</span></span>
+<span class="line"><span>└─────────┘         └─────────┘</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>RSet更新：通过写屏障（Write Barrier）在引用赋值时维护</span></span></code></pre>
+<h4 id="543-回收价值排序">5.4.3 回收价值排序</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>G1根据每个Region的：</span></span>
+<span class="line"><span>1. 存活对象比例（越低越好）</span></span>
+<span class="line"><span>2. 回收耗时预估</span></span>
+<span class="line"><span>3. 用户设定的目标停顿时间</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>选择"垃圾最多"的Region优先回收 → "Garbage First"名称由来</span></span></code></pre>
+<h3 id="55-g1的核心参数">5.5 G1的核心参数</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 启用G1（JDK 9+默认）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseG1GC</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 目标停顿时间（默认200ms）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:MaxGCPauseMillis</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=200</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># Region大小（1-32MB，2的幂次）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:G1HeapRegionSize</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=16m</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 老年代使用阈值（默认45%，触发并发标记）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:InitiatingHeapOccupancyPercent</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=45</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 混合回收时，老年代Region回收比例（默认10%）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:G1MixedGCCountTarget</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=8</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 堆内存预留比例（默认10%，防止to-space溢出）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:G1ReservePercent</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=10</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 大对象阈值（默认Region的50%）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:G1HeapWastePercent</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=5</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 并发标记线程数</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:ConcGCThreads</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=4</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 并行GC线程数</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:ParallelGCThreads</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=8</span></span></code></pre>
+<h3 id="56-g1的优缺点">5.6 G1的优缺点</h3>
+<p><strong>优点</strong>：</p>
+<ul>
+<li>可预测的停顿时间（<code>-XX:MaxGCPauseMillis</code>）</li>
+<li>无内存碎片（Region间复制）</li>
+<li>大堆内存表现优异（6GB+）</li>
+<li>自动调优，参数简单</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li>小堆内存（&#x3C;4GB）不如CMS</li>
+<li>内存占用高（RSet、卡表等额外开销约10-20%）</li>
+<li>并发标记阶段占用CPU</li>
+<li>混合回收时STW时间可能超预期</li>
+</ul>
+<h3 id="57-g1调优实战">5.7 G1调优实战</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 典型G1配置（JDK 11+，4C8G）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseG1GC</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:MaxGCPauseMillis</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=100</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:G1HeapRegionSize</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=8m</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:InitiatingHeapOccupancyPercent</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=40</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:G1ReservePercent</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=15</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+ParallelRefProcEnabled</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+AlwaysPreTouch</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 大堆配置（32GB+）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseG1GC</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:MaxGCPauseMillis</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=200</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:G1HeapRegionSize</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=32m</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:InitiatingHeapOccupancyPercent</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=35</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:G1MixedGCCountTarget</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=16</span></span></code></pre>
+<p><strong>调优要点</strong>：</p>
+<ol>
+<li><code>MaxGCPauseMillis</code>：设置过小→回收频率高；过大→单次回收时间长</li>
+<li><code>G1HeapRegionSize</code>：大对象多→调大；小对象多→调小</li>
+<li><code>InitiatingHeapOccupancyPercent</code>：过低→频繁并发标记；过高→Full GC风险</li>
+<li>避免显式设置<code>-Xmn</code>，让G1自动管理新生代大小</li>
+</ol>
+<h3 id="58-g1源码级细节">5.8 G1源码级细节</h3>
+<h4 id="581-g1的region状态转换">5.8.1 G1的Region状态转换</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Eden Region:</span></span>
+<span class="line"><span>  分配对象 → 满 → Minor GC → 存活对象复制到Survivor → 清空</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Survivor Region:</span></span>
+<span class="line"><span>  存放存活对象 → Minor GC → 年龄达标晋升到Old → 清空</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Old Region:</span></span>
+<span class="line"><span>  存放长期存活对象 → 并发标记 → 混合回收 → 清空</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Humongous Region:</span></span>
+<span class="line"><span>  存放大对象 → 并发标记 → 混合回收 → 清空</span></span></code></pre>
+<h4 id="582-g1的并发标记周期">5.8.2 G1的并发标记周期</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>1. 初始标记（STW）：标记GC Roots直接关联对象</span></span>
+<span class="line"><span>2. 并发标记：遍历对象图，计算存活率</span></span>
+<span class="line"><span>3. 最终标记（STW）：处理SATB队列</span></span>
+<span class="line"><span>4. 筛选回收（STW）：选择Region，复制存活对象</span></span></code></pre>
+<h4 id="583-g1的混合回收mixed-gc">5.8.3 G1的混合回收（Mixed GC）</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>混合回收 = Minor GC + 部分Old Region回收</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>回收流程：</span></span>
+<span class="line"><span>1. 回收所有Young Region（Eden + Survivor）</span></span>
+<span class="line"><span>2. 根据回收价值排序，选择部分Old Region</span></span>
+<span class="line"><span>3. 复制存活对象到新Region</span></span>
+<span class="line"><span>4. 清空旧Region</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>关键参数：</span></span>
+<span class="line"><span>- G1MixedGCCountTarget：混合回收次数（默认8）</span></span>
+<span class="line"><span>- G1OldCSetRegionThresholdThreshold：单次混合回收Old Region上限</span></span></code></pre>
+<hr>
+<h2 id="六zgcz-garbage-collector">六、ZGC（Z Garbage Collector）</h2>
+<h3 id="61-概述">6.1 概述</h3>
+<p>ZGC是JDK 11引入的<strong>低延迟</strong>收集器，JDK 15转正，JDK 21引入分代ZGC。<strong>目标：TB级堆内存，暂停时间&#x3C;1ms，且堆越大暂停时间越稳定</strong>。</p>
+<blockquote>
+<p><strong>设计哲学</strong>：牺牲少量吞吐量（约15%），换取极致的低延迟。</p>
+</blockquote>
+<h3 id="62-zgc的核心创新">6.2 ZGC的核心创新</h3>
+<h4 id="621-染色指针colored-pointers">6.2.1 染色指针（Colored Pointers）</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>传统GC：对象头存储标记信息</span></span>
+<span class="line"><span>ZGC：指针本身存储GC信息（64位系统）</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>64位指针布局：</span></span>
+<span class="line"><span>┌────┬────┬────┬────┬────┬────┬────┬────┐</span></span>
+<span class="line"><span>│ 0  │ 0  │ 0  │ 0  │ M0 │ M1 │ R  │ F  │</span></span>
+<span class="line"><span>└────┴────┴────┴────┴────┴────┴────┴────┘</span></span>
+<span class="line"><span>  42-44位    │    │    │    │</span></span>
+<span class="line"><span>             │    │    │    └─ Finalizable（是否需finalize）</span></span>
+<span class="line"><span>             │    │    └────── Remapped（是否已重映射）</span></span>
+<span class="line"><span>             │    └─────────── Marked1（标记位1）</span></span>
+<span class="line"><span>             └──────────────── Marked0（标记位0）</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>优势：</span></span>
+<span class="line"><span>1. 无需访问对象头即可判断对象状态</span></span>
+<span class="line"><span>2. 指针自愈：GC后无需更新对象，只需更新指针</span></span>
+<span class="line"><span>3. 支持并发重映射</span></span></code></pre>
+<h4 id="622-读屏障load-barrier">6.2.2 读屏障（Load Barrier）</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 用户代码</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Object</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> obj</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> field</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">get</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 读取引用</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// ZGC插入的读屏障（伪代码）</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Object</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> obj</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478"> field</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">get</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">isBadColor</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF">obj</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {     </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 检查指针颜色</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    obj </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">=</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> loadBarrier</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF">obj</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">; </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 慢路径：修正指针</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p><strong>作用</strong>：</p>
+<ul>
+<li>并发标记阶段：保证对象图遍历的正确性</li>
+<li>并发转移阶段：自动修正引用，无需STW</li>
+</ul>
+<h4 id="623-并发转移concurrent-relocation">6.2.3 并发转移（Concurrent Relocation）</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>传统GC：STW阶段移动对象，更新所有引用</span></span>
+<span class="line"><span>ZGC：并发移动对象，通过读屏障自动修正引用</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>转移过程：</span></span>
+<span class="line"><span>1. 选择转移集（Collection Set）</span></span>
+<span class="line"><span>2. 并发转移对象到新Region</span></span>
+<span class="line"><span>3. 读屏障自动修正指向旧地址的引用</span></span>
+<span class="line"><span>4. 旧Region清空后可复用</span></span></code></pre>
+<h3 id="63-zgc的工作流程">6.3 ZGC的工作流程</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>┌─────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│                    ZGC 执行流程                              │</span></span>
+<span class="line"><span>│                                                             │</span></span>
+<span class="line"><span>│  ┌──────────┐    ┌──────────┐    ┌──────────┐               │</span></span>
+<span class="line"><span>│  │ 并发标记  │ → │ 并发预备  │ → │ 并发转移  │               │</span></span>
+<span class="line"><span>│  │ (并发)   │    │ 重分配   │    │ (并发)   │               │</span></span>
+<span class="line"><span>│  │          │    │ (STW极短)│    │          │               │</span></span>
+<span class="line"><span>│  └──────────┘    └──────────┘    └──────────┘               │</span></span>
+<span class="line"><span>│                                                             │</span></span>
+<span class="line"><span>│  遍历对象图        选择转移集        移动对象+修正引用         │</span></span>
+<span class="line"><span>│  标记存活对象      准备新Region      读屏障自动修正            │</span></span>
+<span class="line"><span>│                                                             │</span></span>
+<span class="line"><span>│  ┌──────────────────────────────────────────────────────┐   │</span></span>
+<span class="line"><span>│  │ 可选：Full GC（极少触发，如内存严重不足）              │   │</span></span>
+<span class="line"><span>│  └──────────────────────────────────────────────────────┘   │</span></span>
+<span class="line"><span>└─────────────────────────────────────────────────────────────┘</span></span></code></pre>
+<p><strong>关键特性</strong>：</p>
+<ul>
+<li><strong>并发标记</strong>：与用户线程并发，无STW</li>
+<li><strong>并发预备重分配</strong>：STW极短（&#x3C;1ms），仅选择转移集</li>
+<li><strong>并发转移</strong>：对象移动与用户线程并发，读屏障自动修正</li>
+</ul>
+<h3 id="64-zgc的核心参数">6.4 ZGC的核心参数</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 启用ZGC（JDK 15+）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseZGC</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 分代ZGC（JDK 21+，推荐）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseZGC</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -XX:+ZGenerational</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 最大堆内存</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-Xmx16g</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 并发GC线程数（默认CPU核数的1/8）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:ConcGCThreads</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=2</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 软最大堆（ZGC会尝试保持堆大小低于此值）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:SoftMaxHeapSize</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=12g</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 大对象阈值（默认Medium Page的3/4）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:ZAllocationSpikeTolerance</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=2</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 启用大对象支持（JDK 23+）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+ZUncommit</span></span></code></pre>
+<h3 id="65-zgc的优缺点">6.5 ZGC的优缺点</h3>
+<p><strong>优点</strong>：</p>
+<ul>
+<li>极低延迟：暂停时间&#x3C;1ms，且与堆大小无关</li>
+<li>超大堆支持：最大16TB堆内存</li>
+<li>无内存碎片：并发转移自动整理</li>
+<li>吞吐量损失小：约15%（JDK 21分代ZGC后更小）</li>
+</ul>
+<p><strong>缺点</strong>：</p>
+<ul>
+<li>吞吐量略低于G1（约10-15%）</li>
+<li>内存占用高：需要额外空间存储染色指针元数据</li>
+<li>小堆内存优势不明显</li>
+<li>JDK 11-14为非分代ZGC，Full GC代价大</li>
+</ul>
+<h3 id="66-zgc调优实战">6.6 ZGC调优实战</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 典型ZGC配置（JDK 21+，分代ZGC）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseZGC</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+ZGenerational</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-Xmx16g</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:SoftMaxHeapSize</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=12g</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:ConcGCThreads</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=4</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+AlwaysPreTouch</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+DisableExplicitGC</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 低延迟场景（暂停时间优先）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseZGC</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+ZGenerational</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-Xmx8g</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:SoftMaxHeapSize</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=6g</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:ConcGCThreads</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=2</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:ZAllocationSpikeTolerance</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=1.5</span></span></code></pre>
+<p><strong>调优要点</strong>：</p>
+<ol>
+<li><code>SoftMaxHeapSize</code>：设置为Xmx的75-80%，给ZGC预留空间</li>
+<li><code>ConcGCThreads</code>：过多影响业务线程，过少影响回收效率</li>
+<li>避免显式<code>System.gc()</code>，使用<code>-XX:+DisableExplicitGC</code></li>
+<li>分代ZGC（JDK 21+）显著降低Full GC频率</li>
+</ol>
+<h3 id="67-zgc源码级细节">6.7 ZGC源码级细节</h3>
+<h4 id="671-染色指针的状态转换">6.7.1 染色指针的状态转换</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Marked0 / Marked1：标记位，交替使用</span></span>
+<span class="line"><span>  - 00：未标记</span></span>
+<span class="line"><span>  - 01：Marked0（第一次标记）</span></span>
+<span class="line"><span>  - 10：Marked1（第二次标记）</span></span>
+<span class="line"><span>  - 11：已标记（最终状态）</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Remapped：重映射位</span></span>
+<span class="line"><span>  - 0：未重映射（指向旧地址）</span></span>
+<span class="line"><span>  - 1：已重映射（指向新地址）</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Finalizable：finalize位</span></span>
+<span class="line"><span>  - 0：无需finalize</span></span>
+<span class="line"><span>  - 1：需要finalize</span></span></code></pre>
+<h4 id="672-读屏障的实现">6.7.2 读屏障的实现</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// ZGC读屏障（伪代码）</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Object</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> loadBarrier</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Object</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF"> obj</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">isColored</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF">obj</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">isMarked</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF">obj</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">            return</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> obj;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 已标记，直接返回</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        if</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">isRemapped</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF">obj</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">            return</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> obj;  </span><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">// 已重映射，直接返回</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">        // 慢路径：修正指针</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        return</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> slowPath</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#6F42C1;--shiki-dark:#82AAFF">obj</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    return</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> obj;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<h4 id="673-并发转移的实现">6.7.3 并发转移的实现</h4>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>1. 选择转移集（Collection Set）</span></span>
+<span class="line"><span>2. 并发转移对象到新Region</span></span>
+<span class="line"><span>3. 读屏障自动修正指向旧地址的引用</span></span>
+<span class="line"><span>4. 旧Region清空后可复用</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>关键数据结构：</span></span>
+<span class="line"><span>- 转移表（Forwarding Table）：记录对象转移映射</span></span>
+<span class="line"><span>- 读屏障：自动修正引用</span></span></code></pre>
+<hr>
+<h2 id="七三大收集器对比">七、三大收集器对比</h2>
+<h3 id="71-核心指标对比">7.1 核心指标对比</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>特性</th><th>CMS</th><th>G1</th><th>ZGC</th></tr></thead><tbody><tr><td><strong>目标</strong></td><td>最短停顿</td><td>可预测停顿</td><td>极低延迟</td></tr><tr><td><strong>算法</strong></td><td>标记-清除</td><td>标记-整理（Region间复制）</td><td>染色指针+并发转移</td></tr><tr><td><strong>内存碎片</strong></td><td>有（需整理）</td><td>无</td><td>无</td></tr><tr><td><strong>STW时间</strong></td><td>10-100ms</td><td>10-200ms</td><td>&#x3C;1ms</td></tr><tr><td><strong>堆大小</strong></td><td>&#x3C;4GB</td><td>4GB-64GB</td><td>8GB-16TB</td></tr><tr><td><strong>吞吐量</strong></td><td>中</td><td>高</td><td>中高（损失~15%）</td></tr><tr><td><strong>内存开销</strong></td><td>低</td><td>中（10-20%）</td><td>中高</td></tr><tr><td><strong>CPU开销</strong></td><td>中</td><td>中</td><td>中高</td></tr><tr><td><strong>JDK版本</strong></td><td>5-14（已移除）</td><td>7+（9+默认）</td><td>11+（15+转正）</td></tr><tr><td><strong>适用场景</strong></td><td>已淘汰</td><td>通用首选</td><td>低延迟/大堆</td></tr></tbody></table>
+<h3 id="72-停顿时间对比">7.2 停顿时间对比</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>堆大小：8GB</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>CMS:  ████████████████████████████████████████ 50-200ms</span></span>
+<span class="line"><span>G1:   ████████████████ 20-100ms</span></span>
+<span class="line"><span>ZGC:  █ &#x3C;1ms</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>堆大小：64GB</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>CMS:  ████████████████████████████████████████████████████████ 200-1000ms</span></span>
+<span class="line"><span>G1:   ████████████████████████ 50-200ms</span></span>
+<span class="line"><span>ZGC:  █ &#x3C;1ms（几乎不变）</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>堆大小：512GB</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>CMS:  不支持</span></span>
+<span class="line"><span>G1:   ████████████████████████████████ 100-500ms</span></span>
+<span class="line"><span>ZGC:  █ &#x3C;1ms（几乎不变）</span></span></code></pre>
+<h3 id="73-吞吐量对比">7.3 吞吐量对比</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>吞吐量（越高越好）：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>CMS:  ████████████████████████████ 85-90%</span></span>
+<span class="line"><span>G1:   ████████████████████████████████ 90-95%</span></span>
+<span class="line"><span>ZGC:  ██████████████████████████ 80-85%（JDK 21分代ZGC后提升）</span></span></code></pre>
+<hr>
+<h2 id="八选型决策指南">八、选型决策指南</h2>
+<h3 id="81-决策流程图">8.1 决策流程图</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>开始</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  ▼</span></span>
+<span class="line"><span>堆内存 &#x3C; 4GB？</span></span>
+<span class="line"><span>  ├─ 是 → G1（或Parallel GC）</span></span>
+<span class="line"><span>  │</span></span>
+<span class="line"><span>  └─ 否 → 延迟敏感（P99 &#x3C; 10ms）？</span></span>
+<span class="line"><span>           ├─ 是 → 堆内存 > 16GB？</span></span>
+<span class="line"><span>           │        ├─ 是 → ZGC</span></span>
+<span class="line"><span>           │        └─ 否 → ZGC 或 G1</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           └─ 否 → 吞吐量优先？</span></span>
+<span class="line"><span>                    ├─ 是 → G1 或 Parallel GC</span></span>
+<span class="line"><span>                    └─ 否 → G1（通用首选）</span></span></code></pre>
+<h3 id="82-场景化推荐">8.2 场景化推荐</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>场景</th><th>推荐GC</th><th>理由</th></tr></thead><tbody><tr><td><strong>微服务（&#x3C;4GB）</strong></td><td>G1</td><td>自动调优，参数简单</td></tr><tr><td><strong>Web应用（4-16GB）</strong></td><td>G1</td><td>平衡延迟与吞吐量</td></tr><tr><td><strong>大数据/缓存（16-64GB）</strong></td><td>G1 或 ZGC</td><td>G1成熟稳定，ZGC低延迟</td></tr><tr><td><strong>实时交易（低延迟）</strong></td><td>ZGC</td><td>暂停时间&#x3C;1ms</td></tr><tr><td><strong>批处理/离线计算</strong></td><td>Parallel GC</td><td>吞吐量优先</td></tr><tr><td><strong>JDK 21+新项目</strong></td><td>分代ZGC</td><td>低延迟+高吞吐量</td></tr><tr><td><strong>遗留系统（JDK 8）</strong></td><td>G1</td><td>CMS已废弃，G1更优</td></tr></tbody></table>
+<h3 id="83-版本化建议">8.3 版本化建议</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>JDK版本</th><th>推荐GC</th><th>备注</th></tr></thead><tbody><tr><td>JDK 8</td><td>G1</td><td>CMS已废弃，G1更稳定</td></tr><tr><td>JDK 11</td><td>G1</td><td>ZGC实验性，生产慎用</td></tr><tr><td>JDK 17</td><td>G1 或 ZGC</td><td>ZGC已转正</td></tr><tr><td>JDK 21+</td><td>分代ZGC</td><td>低延迟+高吞吐量</td></tr></tbody></table>
+<hr>
+<h2 id="九gc日志与监控">九、GC日志与监控</h2>
+<h3 id="91-开启gc日志">9.1 开启GC日志</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># JDK 8</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+PrintGCDetails</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+PrintGCDateStamps</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-Xloggc:/path/to/gc.log</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseGCLogFileRotation</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:NumberOfGCLogFiles</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=5</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:GCLogFileSize</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=20M</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># JDK 9+</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-Xlog:gc*:file</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=/path/to/gc.log:time,level,tags:filecount=5,filesize=20M</span></span></code></pre>
+<h3 id="92-gc日志分析工具">9.2 GC日志分析工具</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>工具</th><th>特点</th><th>适用场景</th></tr></thead><tbody><tr><td><strong>GCEasy</strong></td><td>在线分析，可视化</td><td>快速分析</td></tr><tr><td><strong>GCViewer</strong></td><td>开源，功能全面</td><td>深度分析</td></tr><tr><td><strong>JProfiler</strong></td><td>商业，集成IDE</td><td>开发调试</td></tr><tr><td><strong>Arthas</strong></td><td>在线诊断</td><td>生产环境</td></tr></tbody></table>
+<h3 id="93-关键监控指标">9.3 关键监控指标</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 使用jstat监控GC</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">jstat</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -gcutil</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> &#x3C;</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">pi</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">d</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">></span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 1000</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 10</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 输出说明</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">S0</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">     S1</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">     E</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">      O</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">      M</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">     CCS</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">    YGC</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">     YGCT</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">    FGC</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">    FGCT</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">     GCT</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">0.00</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">  95.23</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">  67.45</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">  45.67</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">  98.12</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">  96.34</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">   1234</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">   12.345</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">    12</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">   1.234</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C">   13.579</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 关键指标：</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># O (Old Gen使用率) > 70% → 关注</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># FGC (Full GC次数) 增长快 → 内存泄漏或配置不当</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># GCT (GC总时间) / 运行时间 > 10% → GC开销过大</span></span></code></pre>
+<hr>
+<h2 id="十生产问题排查实战">十、生产问题排查实战</h2>
+<h3 id="101-频繁full-gc">10.1 频繁Full GC</h3>
+<p><strong>现象</strong>：FGC次数快速增长，服务周期性卡顿</p>
+<p><strong>排查步骤</strong>：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 1. 查看GC日志，确认Full GC原因</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">grep</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD"> "</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">Full GC</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> gc.log</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> |</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> tail</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -20</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 2. 常见原因：</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - Metadata GC Threshold：Metaspace不足</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - Ergonomics：堆空间不足</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - System.gc()：显式调用</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - Allocation Failure：内存分配失败</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 3. 分析堆内存</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">jmap</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -histo:live</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> &#x3C;</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">pi</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">d</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">></span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> |</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> head</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -30</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 4. 导出堆快照</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">jmap</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -dump:format=b,file=heap.hprof</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> &#x3C;</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">pi</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">d</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">></span></span></code></pre>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>增大堆内存：<code>-Xmx</code></li>
+<li>增大Metaspace：<code>-XX:MaxMetaspaceSize</code></li>
+<li>禁用显式GC：<code>-XX:+DisableExplicitGC</code></li>
+<li>检查内存泄漏：MAT分析堆快照</li>
+</ul>
+<h3 id="102-内存泄漏">10.2 内存泄漏</h3>
+<p><strong>现象</strong>：Old Gen使用率持续增长，Full GC后不下降</p>
+<p><strong>排查步骤</strong>：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 1. 确认Old Gen趋势</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">jstat</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -gcutil</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> &#x3C;</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">pi</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">d</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">></span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 5000</span><span style="--shiki-light:#1976D2;--shiki-dark:#F78C6C"> 20</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 2. 导出堆快照</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">jmap</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -dump:format=b,file=heap.hprof</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> &#x3C;</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">pi</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">d</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 3. MAT分析</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - Dominator Tree：查看最大对象</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - Leak Suspects：自动检测泄漏</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - Path to GC Roots：查看引用链</span></span></code></pre>
+<p><strong>常见泄漏源</strong>：</p>
+<ul>
+<li>ThreadLocal未清理</li>
+<li>静态集合类持续增长</li>
+<li>连接/流未关闭</li>
+<li>监听器未注销</li>
+</ul>
+<h3 id="103-gc暂停时间过长">10.3 GC暂停时间过长</h3>
+<p><strong>现象</strong>：P99延迟高，GC日志显示长暂停</p>
+<p><strong>排查步骤</strong>：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 1. 查看GC暂停时间</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">grep</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD"> "</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">Pause</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D"> gc.log</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> |</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> awk</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD"> '</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">{print $NF}</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">'</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> |</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> sort</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -n</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> |</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> tail</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -20</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># 2. 分析暂停原因</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - 对象晋升过快：增大Survivor或调整晋升阈值</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - 大对象分配：调整Region大小或PretenureSizeThreshold</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># - 引用处理慢：开启ParallelRefProcEnabled</span></span></code></pre>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>G1：调整<code>MaxGCPauseMillis</code>、<code>G1HeapRegionSize</code></li>
+<li>ZGC：增大<code>ConcGCThreads</code>、调整<code>SoftMaxHeapSize</code></li>
+<li>通用：增大堆内存、优化对象分配</li>
+</ul>
+<hr>
+<h2 id="十一面试高频问题">十一、面试高频问题</h2>
+<h3 id="111-基础问题">11.1 基础问题</h3>
+<p><strong>Q：CMS和G1的区别？</strong></p>
+<ul>
+<li>CMS：标记-清除，有碎片，已废弃</li>
+<li>G1：Region化，标记-整理，可预测停顿，JDK 9+默认</li>
+</ul>
+<p><strong>Q：G1如何避免Full GC？</strong></p>
+<ul>
+<li>及时并发标记（IHOP控制）</li>
+<li>混合回收（Mixed GC）</li>
+<li>预留空间（G1ReservePercent）</li>
+<li>避免大对象（Humongous Region）</li>
+</ul>
+<p><strong>Q：ZGC如何实现极低延迟？</strong></p>
+<ul>
+<li>染色指针：指针存储GC信息</li>
+<li>读屏障：并发修正引用</li>
+<li>并发转移：对象移动与用户线程并发</li>
+</ul>
+<h3 id="112-进阶问题">11.2 进阶问题</h3>
+<p><strong>Q：G1的RSet如何维护？</strong></p>
+<ul>
+<li>写屏障：引用赋值时维护</li>
+<li>卡表：512字节粒度</li>
+<li>并发 refinement 线程：批量处理</li>
+</ul>
+<p><strong>Q：ZGC的染色指针如何实现？</strong></p>
+<ul>
+<li>64位系统：指针高位存储标记</li>
+<li>多重映射：不同视角访问同一内存</li>
+<li>自愈：读屏障自动修正</li>
+</ul>
+<p><strong>Q：如何选择GC？</strong></p>
+<ul>
+<li>堆大小：小堆G1，大堆ZGC</li>
+<li>延迟：低延迟ZGC，高吞吐Parallel</li>
+<li>版本：JDK 8用G1，JDK 21+用分代ZGC</li>
+</ul>
+<h3 id="113-深入问题">11.3 深入问题</h3>
+<p><strong>Q：CMS的并发标记如何保证正确性？</strong></p>
+<ul>
+<li>三色标记法：白、灰、黑</li>
+<li>写屏障：维护标记正确性</li>
+<li>重新标记：修正并发期间的变动</li>
+</ul>
+<p><strong>Q：G1的SATB如何工作？</strong></p>
+<ul>
+<li>并发标记开始时记录对象图快照</li>
+<li>写屏障记录引用变化</li>
+<li>最终标记处理SATB队列</li>
+</ul>
+<p><strong>Q：ZGC的读屏障性能开销如何？</strong></p>
+<ul>
+<li>读屏障在每次引用读取时执行</li>
+<li>快路径：检查指针颜色，无额外开销</li>
+<li>慢路径：修正指针，开销较大</li>
+<li>总体开销：约5-10%</li>
+</ul>
+<hr>
+<h2 id="十二总结与最佳实践">十二、总结与最佳实践</h2>
+<h3 id="121-选型总结">12.1 选型总结</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>┌─────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│                    GC选型速查                                │</span></span>
+<span class="line"><span>│                                                             │</span></span>
+<span class="line"><span>│  JDK 8：  G1（CMS已废弃）                                    │</span></span>
+<span class="line"><span>│  JDK 11： G1（默认）或 ZGC（实验性）                          │</span></span>
+<span class="line"><span>│  JDK 17： G1 或 ZGC（已转正）                                │</span></span>
+<span class="line"><span>│  JDK 21+：分代ZGC（低延迟+高吞吐量）                          │</span></span>
+<span class="line"><span>│                                                             │</span></span>
+<span class="line"><span>│  小堆（&#x3C;4GB）：G1                                            │</span></span>
+<span class="line"><span>│  中堆（4-16GB）：G1                                          │</span></span>
+<span class="line"><span>│  大堆（16-64GB）：G1 或 ZGC                                  │</span></span>
+<span class="line"><span>│  超大堆（>64GB）：ZGC                                        │</span></span>
+<span class="line"><span>│  低延迟（P99&#x3C;10ms）：ZGC                                     │</span></span>
+<span class="line"><span>│  高吞吐量：Parallel GC                                       │</span></span>
+<span class="line"><span>└─────────────────────────────────────────────────────────────┘</span></span></code></pre>
+<h3 id="122-调优最佳实践">12.2 调优最佳实践</h3>
+<ol>
+<li><strong>先监控后调优</strong>：开启GC日志，分析后再调整</li>
+<li><strong>避免过度调优</strong>：G1/ZGC自动调优能力强，优先使用默认配置</li>
+<li><strong>关注业务指标</strong>：P99延迟、吞吐量、错误率</li>
+<li><strong>压测验证</strong>：调优后必须压测验证</li>
+<li><strong>逐步调整</strong>：每次只改一个参数，观察效果</li>
+</ol>
+<h3 id="123-通用配置模板">12.3 通用配置模板</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="bash"><code><span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># G1通用配置（JDK 11+）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseG1GC</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-Xms4g</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -Xmx4g</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:MaxGCPauseMillis</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=200</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+ParallelRefProcEnabled</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+AlwaysPreTouch</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+DisableExplicitGC</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-Xlog:gc*:file</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=/var/log/gc.log:time,level,tags:filecount=5,filesize=20M</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic"># ZGC通用配置（JDK 21+）</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+UseZGC</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+ZGenerational</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-Xms8g</span><span style="--shiki-light:#2B5581;--shiki-dark:#82AAFF"> -Xmx8g</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:SoftMaxHeapSize</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=6g</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+AlwaysPreTouch</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-XX:+DisableExplicitGC</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">-Xlog:gc*:file</span><span style="--shiki-light:#2B5581;--shiki-dark:#ECC48D">=/var/log/gc.log:time,level,tags:filecount=5,filesize=20M</span></span></code></pre>
+<hr>
+<blockquote>
+<p><strong>更新于 2026-09-28</strong> | 持续补充中…</p>
+<p>这篇文章是对JVM GC的系统性梳理，从基础原理到生产实践，适合不同经验水平的开发者。配合《Tomcat 架构原理与性能调优深度解析》中的JVM调优章节一起阅读效果更佳。</p>
+</blockquote> </article> <hr class="my-8 border-dashed"> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/2026-09-28-JVM-GC-CMS-G1-ZGC深度解析.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8"> <li> <a href="/tags/jvm/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-2"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> JVM </a> </li><li> <a href="/tags/gc/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-3"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> GC </a> </li><li> <a href="/tags/cms/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-4"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> CMS </a> </li><li> <a href="/tags/g-1/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-5"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> G1 </a> </li><li> <a href="/tags/zgc/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-6"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> ZGC </a> </li><li> <a href="/tags/性能调优/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-7"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 性能调优 </a> </li><li> <a href="/tags/java/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-8"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> Java </a> </li> </ul> <div id="btt-btn-container" class="fixed end-4 bottom-8 z-50 md:sticky md:end-auto md:float-end md:me-1 translate-y-14 opacity-0 transition duration-500"> <button data-button="back-to-top" class="group relative bg-background px-2 py-1 size-14 rounded-full shadow-xl md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg"> <span id="progress-indicator" class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"></span> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block rotate-90 md:hidden"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg> <span class="sr-only text-sm group-hover:text-accent md:not-sr-only"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M16 9l-4 -4" /><path d="M8 9l4 -4" /></svg>
+Back To Top
+</span> </button> </div> <script data-astro-rerun>
+  /** Scrolls the document to the top when
+   * the "Back to Top" button is clicked. */
+  function backToTop() {
+    const rootElement = document.documentElement;
+    const btnContainer = document.querySelector("#btt-btn-container");
+    const backToTopBtn = document.querySelector("[data-button='back-to-top']");
+    const progressIndicator = document.querySelector("#progress-indicator");
+
+    if (!rootElement || !btnContainer || !backToTopBtn || !progressIndicator)
+      return;
+
+    // Attach click event handler for back-to-top button
+    backToTopBtn.addEventListener("click", () => {
+      document.body.scrollTop = 0; // For Safari
+      document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+    });
+
+    // Handle button visibility according to scroll position
+    let lastVisible = null;
+    function handleScroll() {
+      const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
+      const scrollTop = rootElement.scrollTop;
+      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+
+      progressIndicator.style.setProperty(
+        "background-image",
+        `conic-gradient(var(--accent), var(--accent) ${scrollPercent}%, transparent ${scrollPercent}%)`
+      );
+
+      const isVisible = scrollTop / scrollTotal > 0.3;
+
+      if (isVisible !== lastVisible) {
+        btnContainer.classList.toggle("opacity-100", isVisible);
+        btnContainer.classList.toggle("translate-y-0", isVisible);
+        btnContainer.classList.toggle("opacity-0", !isVisible);
+        btnContainer.classList.toggle("translate-y-14", !isVisible);
+        lastVisible = isVisible;
+      }
+    }
+
+    let ticking = false;
+    document.addEventListener("scroll", () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+  backToTop();
+</script> <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start"><span class="italic">Share this post on:</span><div class="text-center"><a href="mailto:?subject=See%20this%20post&#38;body=https://henuhaigang.github.io/posts/2026-09-28-jvm-gc-cms-g1-zgc%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/" title="Share this post via email" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg><span class="sr-only">Share this post via email</span> </a></div></div> <hr class="my-6 border-dashed"> <!-- Previous/Next Post Buttons --> <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">  <a href="/posts/tomcat-小谈" class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"> <div> <span>Next Post</span> <div class="text-sm text-accent/85">Tomcat 核心机制深度解析：从架构设计到生产调优</div> </div> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block flex-none rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg> </a> </div> </main> <footer class="app-layout mt-auto"> <div class="py-6 sm:py-4 border-t border-border flex flex-col items-center justify-between sm:flex-row-reverse"> <div class="flex flex-wrap items-center gap-1"> <a href="https://github.com/henuhaigang" title="scorpion's blog on GitHub" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg> <span class="sr-only">scorpion&#39;s blog on GitHub</span>  </a><a href="mailto:guangzhinew@gmail.com" title="Send an email to scorpion's blog" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg> <span class="sr-only">Send an email to scorpion&#39;s blog</span>  </a> </div> <div class="my-2 flex flex-col items-center whitespace-nowrap sm:flex-row"> <span>Copyright &#169; 2026</span> <span class="hidden sm:inline">&nbsp;|&nbsp;</span> <span>All rights reserved.</span> </div> </div> </footer>  </body></html> <script data-astro-rerun>
+  /** Create a progress indicator
+   *  at the top */
+  function createProgressBar() {
+    // Create the main container div
+    const progressContainer = document.createElement("div");
+    progressContainer.className =
+      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+
+    // Create the progress bar div
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    progressBar.id = "myBar";
+
+    // Append the progress bar to the progress container
+    progressContainer.appendChild(progressBar);
+
+    // Append the progress container to the document body or any other desired parent element
+    document.body.appendChild(progressContainer);
+  }
+  createProgressBar();
+
+  /** Update the progress bar
+   *  when user scrolls */
+  function updateScrollProgress() {
+    document.addEventListener("scroll", () => {
+      const winScroll =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const height =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      if (document) {
+        const myBar = document.getElementById("myBar");
+        if (myBar) {
+          myBar.style.width = scrolled + "%";
+        }
+      }
+    });
+  }
+  updateScrollProgress();
+
+  /** Attaches links to headings in the document,
+   *  allowing sharing of sections easily */
+  function addHeadingLinks() {
+    const headings = Array.from(
+      document.querySelectorAll("h2, h3, h4, h5, h6")
+    );
+    for (const heading of headings) {
+      heading.classList.add("group");
+      const link = document.createElement("a");
+      link.className =
+        "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+      link.href = "#" + heading.id;
+
+      const span = document.createElement("span");
+      span.ariaHidden = "true";
+      span.innerText = "#";
+      link.appendChild(span);
+      heading.appendChild(link);
+    }
+  }
+  addHeadingLinks();
+
+  /** Attaches copy buttons to code blocks in the document,
+   * allowing users to copy code easily. */
+  function attachCopyButtons() {
+    const copyButtonLabel = "Copy";
+    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+
+    for (const codeBlock of codeBlocks) {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+
+      // Check if --file-name-offset custom property exists
+      const computedStyle = getComputedStyle(codeBlock);
+      const hasFileNameOffset =
+        computedStyle.getPropertyValue("--file-name-offset").trim() !== "";
+
+      // Determine the top positioning class
+      const topClass = hasFileNameOffset
+        ? "top-(--file-name-offset)"
+        : "-top-3";
+
+      const copyButton = document.createElement("button");
+      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+      copyButton.innerHTML = copyButtonLabel;
+      codeBlock.setAttribute("tabindex", "0");
+      codeBlock.appendChild(copyButton);
+
+      // wrap codebock with relative parent element
+      codeBlock?.parentNode?.insertBefore(wrapper, codeBlock);
+      wrapper.appendChild(codeBlock);
+
+      copyButton.addEventListener("click", async () => {
+        await copyCode(codeBlock, copyButton);
+      });
+    }
+
+    async function copyCode(block, button) {
+      const code = block.querySelector("code");
+      const text = code?.innerText;
+
+      await navigator.clipboard.writeText(text ?? "");
+
+      // visual feedback that task is completed
+      button.innerText = "Copied";
+
+      setTimeout(() => {
+        button.innerText = copyButtonLabel;
+      }, 700);
+    }
+  }
+  attachCopyButtons();
+
+  /* Go to page start after page swap */
+  document.addEventListener("astro:after-swap", () =>
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+  );
+</script>
