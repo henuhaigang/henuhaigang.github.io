@@ -1,8 +1,8 @@
 ---
 layout:     post
 title:      JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南
-pubDatetime: 2026-09-28T00:00:00.000Z
-modDatetime: 2026-09-28T00:00:00.000Z
+pubDatetime: 2026-09-28T10:00:00+08:00
+modDatetime: 2026-09-28T10:00:00+08:00
 author:     henuhaigang
 header-img: img/post-bg-tomcat.jpg
 catalog: true
