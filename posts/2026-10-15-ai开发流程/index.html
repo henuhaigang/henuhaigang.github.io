@@ -1,0 +1,737 @@
+<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="canonical" href="https://henuhaigang.github.io/posts/2026-10-15-ai%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B/"><meta name="generator" content="Astro v5.16.6"><!-- General Meta Tags --><title>JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 | scorpion&#39;s blog</title><meta name="title" content="JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 | scorpion's blog"><meta name="description" content="借助AI从0开发一个系统"><meta name="author" content="henuhaigang"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 | scorpion's blog"><meta property="og:description" content="借助AI从0开发一个系统"><meta property="og:url" content="https://henuhaigang.github.io/posts/2026-10-15-ai%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B/"><meta property="og:image" content="https://henuhaigang.github.io/posts/2026-10-15-ai%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B/index.png"><!-- Article Published/Modified time --><meta property="article:published_time" content="2026-10-14T02:00:00.000Z"><meta property="article:modified_time" content="2026-10-14T02:00:00.000Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://henuhaigang.github.io/posts/2026-10-15-ai%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B/"><meta property="twitter:title" content="JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 | scorpion's blog"><meta property="twitter:description" content="借助AI从0开发一个系统"><meta property="twitter:image" content="https://henuhaigang.github.io/posts/2026-10-15-ai%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B/index.png"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 | scorpion's blog","image":"https://henuhaigang.github.io/posts/2026-10-15-ai%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B/index.png","datePublished":"2026-10-14T02:00:00.000Z","dateModified":"2026-10-14T02:00:00.000Z","author":[{"@type":"Person","name":"henuhaigang","url":"https://github.com/henuhaigang"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="scorpion's blog" href="https://henuhaigang.github.io/rss.xml"><meta name="theme-color" content=""><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.QW52Ox2j.js"></script><script src="/toggle-theme.js"></script><link rel="stylesheet" href="/_astro/about.CNREz0iA.css">
+<style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media (prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
+:where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
+</style><style>[data-astro-transition-scope="astro-fam6wyqg-1"] { view-transition-name: jvm-gc-\6DF1\5EA6\89E3\6790\FF1A cm-s\3001-g-1-\3001zgc-\539F\7406\3001\4F18\52A3\4E0E\9009\578B\6307\5357; }@layer astro { ::view-transition-old(jvm-gc-\6DF1\5EA6\89E3\6790\FF1A cm-s\3001-g-1-\3001zgc-\539F\7406\3001\4F18\52A3\4E0E\9009\578B\6307\5357) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(jvm-gc-\6DF1\5EA6\89E3\6790\FF1A cm-s\3001-g-1-\3001zgc-\539F\7406\3001\4F18\52A3\4E0E\9009\578B\6307\5357) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(jvm-gc-\6DF1\5EA6\89E3\6790\FF1A cm-s\3001-g-1-\3001zgc-\539F\7406\3001\4F18\52A3\4E0E\9009\578B\6307\5357) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(jvm-gc-\6DF1\5EA6\89E3\6790\FF1A cm-s\3001-g-1-\3001zgc-\539F\7406\3001\4F18\52A3\4E0E\9009\578B\6307\5357) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-2"] { view-transition-name: ai; }@layer astro { ::view-transition-old(ai) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(ai) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(ai) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(ai) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-3"] { view-transition-name: agent; }@layer astro { ::view-transition-old(agent) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(agent) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(agent) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(agent) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-4"] { view-transition-name: \9700\6C42\5F00\53D1; }@layer astro { ::view-transition-old(\9700\6C42\5F00\53D1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(\9700\6C42\5F00\53D1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(\9700\6C42\5F00\53D1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(\9700\6C42\5F00\53D1) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style></head> <body data-astro-cid-sckkx6r4>  <a id="skip-to-content" href="#main-content" class="absolute start-16 -top-full z-50 bg-background px-3 py-2 text-accent backdrop-blur-lg transition-all focus:top-4">
+Skip to content
+</a> <header class="app-layout flex flex-col items-center justify-between sm:flex-row"> <div id="top-nav-wrap" class="py-4 sm:py-6 border-b border-border relative w-full bg-background flex items-baseline justify-between sm:items-center"> <a href="/" class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"> scorpion&#39;s blog </a> <nav id="nav-menu" class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"> <button id="menu-btn" class="focus-outline self-end p-2 sm:hidden" aria-label="Open Menu" aria-expanded="false" aria-controls="menu-items"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden" id="close-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-menu-deep" id="menu-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6h16" /><path d="M7 12h13" /><path d="M10 18h10" /></svg> </button> <ul id="menu-items" class="mt-4 grid w-44 grid-cols-2 place-content-center gap-2 [&#38;>li>a]:block [&#38;>li>a]:px-4 [&#38;>li>a]:py-3 [&#38;>li>a]:text-center [&#38;>li>a]:font-medium [&#38;>li>a]:hover:text-accent sm:[&#38;>li>a]:px-2 sm:[&#38;>li>a]:py-1 hidden sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0"> <li class="col-span-2"> <a href="/posts" class="active-nav">
+Posts
+</a> </li> <li class="col-span-2"> <a href="/tags">
+Tags
+</a> </li> <li class="col-span-2"> <a href="/about">
+About
+</a> </li> <li class="col-span-2"> <a href="/archives" title="Archives" aria-label="archives" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex justify-center p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden sm:inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" /><path d="M10 12l4 0" /></svg> <span class="sm:sr-only">Archives</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <a href="/search" title="Search" aria-label="search" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg> <span class="sr-only">Search</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <button id="theme-btn" class="focus-outline relative size-12 p-4 sm:size-8 hover:[&>svg]:stroke-accent" title="Toggles light & dark" aria-label="auto" aria-live="polite"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg> </button> </li> </ul> </nav> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <div class="app-layout flex items-center justify-start"><a id="back-button" href="/" class="group inline-flex items-center gap-1 hover:text-accent focus-outline -ms-2 mt-8 mb-2 hover:text-foreground/75"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg><span>Go back</span> </a></div><script type="module">function o(){const t=document.querySelector("#back-button"),e=sessionStorage.getItem("backUrl");e&&t&&(t.href=e)}document.addEventListener("astro:page-load",o);o();</script> <main id="main-content" class="app-layout pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl" data-astro-transition-scope="astro-fam6wyqg-1"> JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2026-10-14T02:00:00.000Z">14 Oct, 2026</time> </div> <span aria-hidden="true" class="max-sm:hidden">|</span> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/2026-10-15-AI开发流程.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent max-sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> </div> <article id="article" class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <p>你这个问题，其实是 AI 辅助开发中非常关键的一步：你有一个产品想法，但不知道怎么把想法变成产品需求、页面原型、技术方案，最后变成真正能运行的 App。</p>
+<p>你不需要先学会画原型图，也不需要一开始就知道应该使用什么技术栈。你真正需要的是一套能把“模糊想法”逐步转化为“可开发、可验证产品”的方法，以及一套能让编程 Agent 按照这个方法工作的提示词和 Skills。</p>
+<p>考虑到你使用 Claude Code CLI、OpenCode 等编程 Agent，我建议你建立一套可以在不同项目中复用的 AI 产品开发工作流。</p>
+<h2 id="一先建立正确的开发思维不要从写代码开始">一、先建立正确的开发思维：不要从写代码开始</h2>
+<p>假设你只有一个简单想法：</p>
+<blockquote>
+<p>我想做一个帮助用户进行日常训练的 App，能够记录训练情况，提醒用户每天训练，并查看训练进度。</p>
+</blockquote>
+<p>这时，你还不知道应该有哪些页面、按钮放在哪里、数据怎么保存，甚至不知道应该用什么技术。</p>
+<p>这完全正常。合理的开发流程应该是：</p>
+<p>第 1 步：描述想法</p>
+<p>我想解决什么问题？谁会使用？</p>
+<p>第 2 步：产品需求分析</p>
+<p>用户是谁、有哪些场景、第一版做什么？</p>
+<p>第 3 步：页面设计与原型</p>
+<p>有哪些页面？用户如何操作？</p>
+<p>第 4 步：技术方案与任务拆分</p>
+<p>技术栈、数据模型、接口、开发顺序</p>
+<p>第 5 步：Agent 分阶段实现</p>
+<p>先做可运行版本，再逐步增加功能</p>
+<p>第 6 步：运行、测试、验收</p>
+<p>启动 App、实际体验、发现问题、迭代</p>
+<p>你需要做的不是一次性把所有需求想清楚，而是让大模型在每一个阶段帮助你补齐缺失的信息，并在关键节点让你确认方向。</p>
+<p>最重要的原则：先确定做什么，再决定怎么做，最后才是怎么写代码。</p>
+<h2 id="二不会画原型图怎么办让大模型先帮你设计再生成可交互原型">二、不会画原型图怎么办？让大模型先帮你设计，再生成可交互原型</h2>
+<p>你不需要自己画图。你可以用自然语言描述需求，让大模型负责以下工作：</p>
+<ul>
+<li>识别用户需要哪些功能。</li>
+<li>推导需要哪些页面。</li>
+<li>设计每个页面的信息层级和操作流程。</li>
+<li>提出合理的布局方案。</li>
+<li>生成页面原型。</li>
+<li>根据你的反馈调整布局。</li>
+</ul>
+<p>而且，原型图不一定要是图片。</p>
+<p><a href="https://images.openai.com/static-rsc-4/nkIz-FaymYEX-bzviYZTHzKbTavEcnx0rgGhGm-P_aGRRWpL0ll65d8PtgoZFVJQqNHNmmvcFGDq__ftIcWemBVHZ9yrPmZGVGadP6xLHxGQSXLzI23QIhtX_soRydHzvMwwFgL80Vh1Pd273nu-a00YmQvDc4rW0jmZa16HyCE?purpose=inline">What is Low-Fidelity Prototyping? A Practical Guide</a></p>
+<p>低保真线框图</p>
+<p>先确定页面结构、按钮位置和操作流程，不急着追求美观。</p>
+<p><a href="https://images.openai.com/static-rsc-4/-tXYMyRbhRYakeGNShg9X1S4ubDi75biO1b-jq1fkc7CvyNQSPC_NJ6VJo1jDn1f8Z6oIuwf6frH-O2Q7b-VKTYGN3d13ND8GDAYg65KspzmC0MygYlQAkPp_5JV9DEQf_HmwI_pIdXWNulrRzaMRDb3MbP5drucvJPOubXOI0M?purpose=inline">Fitness &#x26; Wellness Startup — App Design by Fazlur Rahman  on Dribbble</a></p>
+<p>高保真 UI 设计</p>
+<p>再确定颜色、字体、卡片、图标和整体视觉风格。</p>
+<p>我更推荐你采用这个顺序：</p>
+<ol>
+<li>先让大模型用文字列出页面及其功能。</li>
+<li>再生成低保真原型，确认布局和交互。</li>
+<li>确认后生成高保真设计或直接实现可交互页面。</li>
+<li>最后接入真实数据、接口和业务逻辑。</li>
+</ol>
+<p>这样可以避免花费大量时间生成一套漂亮、但不符合实际需求的 UI。</p>
+<h2 id="三你真正需要的是一套固定的提示词而不是一句万能提示词">三、你真正需要的是一套固定的提示词，而不是一句万能提示词</h2>
+<p>建议你把和大模型的对话分成几个阶段。每个阶段有明确的输入、输出和验收标准。</p>
+<h3 id="阶段-1把一个模糊想法变成产品需求">阶段 1：把一个模糊想法变成产品需求</h3>
+<p>你最初甚至只需要说：</p>
+<blockquote>
+<p>我想做一个 App，主要帮助用户完成某项任务。我不懂产品设计，也不会画原型。你先不要写代码，请像一位资深产品经理一样，通过对话帮我梳理需求，逐步形成一个可以开发的产品方案。</p>
+</blockquote>
+<p>接下来使用下面这份提示词。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span></span></span>
+<span class="line"><span># 角色</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>你是一名资深产品经理、UX 设计师和技术产品顾问。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>我只有一个初步想法，不一定能完整表达需求，</span></span>
+<span class="line"><span>也不一定知道正确的功能和交互方式。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 你的任务</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>帮助我把模糊想法转化为清晰、可开发的产品需求。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 工作规则</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>1. 不要假设我已经知道所有需求。</span></span>
+<span class="line"><span>2. 不要一上来就问几十个问题。</span></span>
+<span class="line"><span>3. 每轮优先询问最重要的 1～3 个问题。</span></span>
+<span class="line"><span>4. 如果信息不足，可以先提出合理假设，并明确标注。</span></span>
+<span class="line"><span>5. 对于我没有想到的功能，主动提出建议，并解释原因。</span></span>
+<span class="line"><span>6. 区分第一版必需功能、后续增强功能和暂时不做的功能。</span></span>
+<span class="line"><span>7. 不要在需求尚未明确时直接生成代码。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 工作步骤</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>第一步：理解产品想法</span></span>
+<span class="line"><span>- 解决什么问题？</span></span>
+<span class="line"><span>- 目标用户是谁？</span></span>
+<span class="line"><span>- 用户在什么场景下使用？</span></span>
+<span class="line"><span>- 产品的核心价值是什么？</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>第二步：梳理用户场景</span></span>
+<span class="line"><span>- 用户如何开始使用？</span></span>
+<span class="line"><span>- 用户需要完成哪些任务？</span></span>
+<span class="line"><span>- 正常流程、异常流程分别是什么？</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>第三步：设计功能范围</span></span>
+<span class="line"><span>- 核心功能清单</span></span>
+<span class="line"><span>- 功能优先级</span></span>
+<span class="line"><span>- 第一版 MVP 范围</span></span>
+<span class="line"><span>- 暂不实现的功能</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>第四步：形成产品需求文档</span></span>
+<span class="line"><span>- 产品目标</span></span>
+<span class="line"><span>- 用户角色</span></span>
+<span class="line"><span>- 用户故事</span></span>
+<span class="line"><span>- 功能需求</span></span>
+<span class="line"><span>- 业务规则</span></span>
+<span class="line"><span>- 异常场景</span></span>
+<span class="line"><span>- 验收标准</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 每个阶段的输出要求</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>用通俗易懂的语言解释你的判断。</span></span>
+<span class="line"><span>列出需要我确认的事项。</span></span>
+<span class="line"><span>允许我随时修改之前的决定。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>只有在需求足够清楚后，才进入下一阶段。</span></span>
+<span class="line"><span>最终输出结构化 PRD，并标记尚未确定的内容。</span></span>
+<span class="line"><span></span></span></code></pre>
+<p>为什么要这么写？</p>
+<p>因为你不应该承担“想清楚所有功能”的责任。你只需要描述问题，大模型负责提出问题、发现遗漏、整理方案；但涉及产品方向和业务取舍时，最终仍由你确认。</p>
+<h3 id="阶段-2让大模型从-prd-推导页面">阶段 2：让大模型从 PRD 推导页面</h3>
+<p>当 PRD 基本确定后，不要马上让它写前端代码。先让它设计页面。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span></span></span>
+<span class="line"><span>你现在是一名资深 UX/UI 设计师。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>请根据已经确认的 PRD，设计这个 App 的完整页面结构和交互流程。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>要求：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>1. 先分析用户需要完成的核心任务。</span></span>
+<span class="line"><span>2. 列出页面清单，并解释每个页面的作用。</span></span>
+<span class="line"><span>3. 设计页面之间的跳转关系。</span></span>
+<span class="line"><span>4. 逐个页面描述布局、组件、按钮和交互。</span></span>
+<span class="line"><span>5. 为每个页面补充加载中、空数据、错误、成功等状态。</span></span>
+<span class="line"><span>6. 明确底部导航、顶部导航、弹窗、表单和返回行为。</span></span>
+<span class="line"><span>7. 检查页面之间是否存在功能遗漏或操作断点。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>不要直接编写正式业务代码。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>先输出：</span></span>
+<span class="line"><span>- 页面清单</span></span>
+<span class="line"><span>- 页面关系图</span></span>
+<span class="line"><span>- 核心用户流程</span></span>
+<span class="line"><span>- 每个页面的线框布局说明</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>然后生成可预览的低保真原型。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>如果无法直接生成可交互原型，请使用 HTML/CSS/JavaScript</span></span>
+<span class="line"><span>生成一个可在浏览器打开的独立原型页面。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>原型中的按钮应尽可能可以实际点击，</span></span>
+<span class="line"><span>以便我体验主要操作流程。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>最后告诉我：</span></span>
+<span class="line"><span>- 哪些设计需要我确认</span></span>
+<span class="line"><span>- 哪些地方存在不确定性</span></span>
+<span class="line"><span>- 下一步应该先验证什么</span></span>
+<span class="line"><span></span></span></code></pre>
+<p>这里我特别建议你要求生成可点击的 HTML 原型。它比一张静态图片更适合不会画原型的开发者，因为你可以直接点击按钮、切换页面、填写表单，判断产品操作起来是否符合预期。</p>
+<h3 id="阶段-3让大模型把设计转成技术方案">阶段 3：让大模型把设计转成技术方案</h3>
+<p>等你确认页面和主要流程后，再使用：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span></span></span>
+<span class="line"><span>你现在是一名资深软件架构师。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>请基于已经确认的 PRD、页面原型和交互流程，</span></span>
+<span class="line"><span>设计本项目的技术实现方案。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>要求：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>1. 先检查需求、页面和业务规则是否一致。</span></span>
+<span class="line"><span>2. 推荐合适的技术栈，并解释选择依据。</span></span>
+<span class="line"><span>3. 明确前端、后端、数据库、外部服务的边界。</span></span>
+<span class="line"><span>4. 设计核心数据模型和表结构。</span></span>
+<span class="line"><span>5. 设计 API 或本地数据访问接口。</span></span>
+<span class="line"><span>6. 分析身份认证、权限、数据安全和错误处理。</span></span>
+<span class="line"><span>7. 识别关键技术风险、依赖和需要验证的假设。</span></span>
+<span class="line"><span>8. 设计测试方案和可验证的验收标准。</span></span>
+<span class="line"><span>9. 将项目拆分为可以独立实现和验收的小任务。</span></span>
+<span class="line"><span>10. 标明任务依赖关系，避免一次生成整个项目。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>请输出：</span></span>
+<span class="line"><span>- 技术架构图</span></span>
+<span class="line"><span>- 项目目录结构</span></span>
+<span class="line"><span>- 核心数据模型</span></span>
+<span class="line"><span>- API 设计</span></span>
+<span class="line"><span>- 任务依赖图</span></span>
+<span class="line"><span>- 分阶段实施计划</span></span>
+<span class="line"><span>- 每个任务的验收标准</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>不要在我确认技术方案之前开始正式实现。</span></span>
+<span class="line"><span>如果存在更简单的方案，优先考虑满足需求的最小复杂度。</span></span>
+<span class="line"><span></span></span></code></pre>
+<p>这里还有一个很重要的原则：让大模型先给出推荐方案和理由，不要要求它把所有可能的技术方案都列出来后再让你自己选择。 你可以指出限制条件，由它给出一个主推方案及备选方案。</p>
+<h2 id="四如果你用-claude-code-或-opencode应该怎么设计-skills">四、如果你用 Claude Code 或 OpenCode，应该怎么设计 Skills？</h2>
+<p>上面几份提示词适合你在聊天中逐阶段使用。但如果每次开发 App 都要重新复制这些提示词，会很麻烦。</p>
+<p>更好的办法是：把这些方法沉淀成一套可复用的项目开发 Skills，让 Agent 知道每个阶段应该做什么、产出什么，以及什么时候可以进入下一阶段。</p>
+<p>我建议先设计一个主流程 Skill，再按职责拆分子 Skill。</p>
+<p>app-development-workflow</p>
+<p>总控流程：根据当前项目阶段，调用对应能力</p>
+<p>product-discovery</p>
+<p>需求澄清、MVP、PRD</p>
+<p>ui-prototyping</p>
+<p>页面清单、线框图、可点击原型</p>
+<p>architecture-design</p>
+<p>技术选型、数据模型、接口</p>
+<p>implementation-planning</p>
+<p>任务拆分、依赖、验收条件</p>
+<p>implementation</p>
+<p>分阶段编码、测试、代码审查</p>
+<p>run-and-verify</p>
+<p>启动服务、健康检查、验收</p>
+<h3 id="建议的目录结构">建议的目录结构</h3>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>your-project/</span></span>
+<span class="line"><span>├── AGENTS.md</span></span>
+<span class="line"><span>├── CLAUDE.md</span></span>
+<span class="line"><span>├── .claude/</span></span>
+<span class="line"><span>│   └── skills/</span></span>
+<span class="line"><span>│       ├── app-development-workflow/</span></span>
+<span class="line"><span>│       │   └── SKILL.md</span></span>
+<span class="line"><span>│       ├── product-discovery/</span></span>
+<span class="line"><span>│       │   └── SKILL.md</span></span>
+<span class="line"><span>│       ├── ui-prototyping/</span></span>
+<span class="line"><span>│       │   └── SKILL.md</span></span>
+<span class="line"><span>│       ├── architecture-design/</span></span>
+<span class="line"><span>│       │   └── SKILL.md</span></span>
+<span class="line"><span>│       ├── implementation-planning/</span></span>
+<span class="line"><span>│       │   └── SKILL.md</span></span>
+<span class="line"><span>│       └── run-and-verify/</span></span>
+<span class="line"><span>│           └── SKILL.md</span></span>
+<span class="line"><span>├── docs/</span></span>
+<span class="line"><span>│   ├── product/</span></span>
+<span class="line"><span>│   │   └── PRD.md</span></span>
+<span class="line"><span>│   ├── design/</span></span>
+<span class="line"><span>│   │   ├── pages.md</span></span>
+<span class="line"><span>│   │   └── prototype/</span></span>
+<span class="line"><span>│   ├── architecture/</span></span>
+<span class="line"><span>│   │   └── architecture.md</span></span>
+<span class="line"><span>│   └── development/</span></span>
+<span class="line"><span>│       └── tasks.md</span></span>
+<span class="line"><span>├── scripts/</span></span>
+<span class="line"><span>│   └── dev.sh</span></span>
+<span class="line"><span>└── src/</span></span></code></pre>
+<p>这是一个逻辑示例，不是所有 Agent 都能直接识别的通用目录。比如 Claude Code 有自己的项目级 Skill 目录规范；OpenCode 应按照其当前版本的 Skill 发现规则配置。<code>AGENTS.md</code>、<code>CLAUDE.md</code> 也不应该不加区分地复制全部内容。</p>
+<p>如果你希望私有 Skills 存放在独立仓库，可以把技能仓库放在项目外，通过符号链接、安装脚本或工具支持的技能搜索路径引入。这样每个项目可以使用同一套开发方法，又不必把所有技能正文提交到项目代码仓库。</p>
+<h3 id="主流程-skill-应该写什么">主流程 Skill 应该写什么？</h3>
+<p>它不应该重复所有产品设计知识，而应该负责流程控制。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span></span></span>
+<span class="line"><span>---</span></span>
+<span class="line"><span>name: app-development-workflow</span></span>
+<span class="line"><span>description: Guide an app from an initial vague idea through</span></span>
+<span class="line"><span>  requirements, prototype, architecture, implementation,</span></span>
+<span class="line"><span>  and runtime verification.</span></span>
+<span class="line"><span>---</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># App Development Workflow</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## Goal</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Turn an initial product idea into a working, tested application</span></span>
+<span class="line"><span>through explicit, reviewable stages.</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## Stages</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>1. Discovery</span></span>
+<span class="line"><span>2. Requirements</span></span>
+<span class="line"><span>3. UI and interaction prototype</span></span>
+<span class="line"><span>4. Architecture</span></span>
+<span class="line"><span>5. Implementation planning</span></span>
+<span class="line"><span>6. Incremental implementation</span></span>
+<span class="line"><span>7. Testing and runtime verification</span></span>
+<span class="line"><span>8. Acceptance and iteration</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## Rules</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>- Identify the current project stage before acting.</span></span>
+<span class="line"><span>- Load only the skills needed for the current stage.</span></span>
+<span class="line"><span>- Preserve confirmed decisions and document assumptions.</span></span>
+<span class="line"><span>- Ask a small number of high-value questions at a time.</span></span>
+<span class="line"><span>- Never invent user approval for a major product decision.</span></span>
+<span class="line"><span>- Do not skip prototype review when the UI is still uncertain.</span></span>
+<span class="line"><span>- Do not implement the whole app in one uncontrolled operation.</span></span>
+<span class="line"><span>- Keep project documentation synchronized with approved changes.</span></span>
+<span class="line"><span>- Run tests and verify runtime behavior after implementation.</span></span>
+<span class="line"><span>- Report failures honestly.</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## Stage Transitions</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Do not advance past a major decision point without checking</span></span>
+<span class="line"><span>whether its required outputs exist and are sufficiently complete.</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Allow the user to revise earlier decisions.</span></span>
+<span class="line"><span>When requirements change, identify affected designs, tasks and code.</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## Final Result</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>The application must be runnable, its core user journey must work,</span></span>
+<span class="line"><span>and its implementation must satisfy the agreed acceptance criteria.</span></span>
+<span class="line"><span></span></span></code></pre>
+<p>这套主流程的价值在于：以后你只需要对 Agent 说“我要做一个 App”，它就能先进入需求梳理，而不是一上来创建几十个源代码文件。</p>
+<h2 id="五如何避免-agent-一次生成整个-app最后却不能用">五、如何避免 Agent 一次生成整个 App，最后却不能用？</h2>
+<p>这是整个流程里最值得注意的部分。</p>
+<p>建议把每个阶段的产出定义为交付物 + 验收标准，而不是只给 Agent 一个任务名称。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>阶段</th><th>必须产出的内容</th><th>进入下一阶段的条件</th></tr></thead><tbody><tr><td>产品需求</td><td>PRD、用户场景、MVP 范围</td><td>核心需求与业务规则明确</td></tr><tr><td>页面设计</td><td>页面清单、流程图、原型</td><td>核心操作流程得到确认</td></tr><tr><td>技术设计</td><td>架构、数据模型、接口</td><td>技术方案满足产品需求</td></tr><tr><td>任务规划</td><td>有依赖关系的任务清单</td><td>每个任务有明确验收条件</td></tr><tr><td>开发实现</td><td>代码、测试、构建结果</td><td>当前任务通过验收</td></tr><tr><td>运行验证</td><td>运行状态、健康检查、日志</td><td>核心流程实际可用</td></tr></tbody></table>
+<p>例如，不要给 Agent 这样的任务：</p>
+<blockquote>
+<p>开发一个完整的训练 App，要求功能齐全、界面漂亮。</p>
+</blockquote>
+<p>改成：</p>
+<blockquote>
+<p>根据已经确认的 PRD，先实现首页和训练详情页。使用本地模拟数据，暂时不接入后端。完成后启动应用，验证页面跳转、训练开始与结束流程，并列出尚未实现的功能。未经确认不要扩大任务范围。</p>
+</blockquote>
+<p>第二种提示词更容易获得可靠结果，因为它限制了当前工作范围，并明确了完成的标准。</p>
+<h2 id="六给你一份真正日常使用的开工提示词">六、给你一份真正日常使用的“开工提示词”</h2>
+<p>上面的 Skill 是开发方法的长期沉淀。你每次开始一个新项目时，其实不需要重新输入所有规则。</p>
+<p>你可以只提供下面这段提示词，再用自己的语言描述想法。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span></span></span>
+<span class="line"><span>我想开发一个 App。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>我的想法是：</span></span>
+<span class="line"><span>【在这里用自己的话描述，不需要专业术语，不需要完整需求】</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>请使用 app-development-workflow 帮助我推进项目。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>我的要求：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>1. 我可能不知道应该有哪些功能，也不会画原型图。</span></span>
+<span class="line"><span>   请帮助我发现遗漏，而不是要求我自己设计所有细节。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>2. 先帮助我理解和完善产品需求，再进行页面设计，</span></span>
+<span class="line"><span>   然后做技术设计，最后才进入编码。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>3. 每个阶段都要有明确的交付物和验收标准。</span></span>
+<span class="line"><span>   需要我决定的关键事项，请用通俗的语言解释。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>4. 不要一次问我太多问题。</span></span>
+<span class="line"><span>   每次优先问最影响产品方向的问题。</span></span>
+<span class="line"><span>   如果可以合理假设，就先提出方案并标记假设。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>5. 页面设计阶段，主动生成页面清单、操作流程、</span></span>
+<span class="line"><span>   低保真原型和可点击的交互演示。</span></span>
+<span class="line"><span>   不要只用文字描述页面。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>6. 技术选型时，先根据产品需求推荐合适方案，</span></span>
+<span class="line"><span>   不要默认引入复杂架构。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>7. 开发时拆分为小任务，每完成一个阶段就进行测试、</span></span>
+<span class="line"><span>   启动验证和结果汇报。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>8. 需求、原型和技术方案发生变化时，</span></span>
+<span class="line"><span>   检查之前的文档、任务和代码是否需要同步修改。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>9. 未经我确认，不要擅自扩大 MVP 范围，</span></span>
+<span class="line"><span>   不要执行破坏性操作或发布生产环境。</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>现在先进入需求探索阶段。</span></span>
+<span class="line"><span>请先用自己的话复述你理解的产品想法，</span></span>
+<span class="line"><span>指出最重要的未知事项，并向我提出第一轮问题。</span></span>
+<span class="line"><span>暂时不要写代码。</span></span>
+<span class="line"><span></span></span></code></pre>
+<p>这段提示词最适合用作新项目的入口。真正长期复用时，把它放进你的主流程 Skill，再让各个子 Skill 分别负责 PRD、原型、架构、实现和验证。</p>
+<h2 id="七最后一个建议让大模型承担你不熟悉的工作但不要让它替你做所有决定">七、最后一个建议：让大模型承担你不熟悉的工作，但不要让它替你做所有决定</h2>
+<p>你不需要先成为产品经理、UI 设计师、架构师，才能开始开发 App。</p>
+<p>你只需要掌握三个动作：</p>
+<ul>
+<li>描述： 我想解决什么问题，谁会使用。</li>
+<li>判断： 大模型提出的方案是否符合我的实际想法。</li>
+<li>验收： 我能不能通过原型或真实运行的 App 完成目标任务。</li>
+</ul>
+<p>其余部分可以让 Agent 分阶段完成。尤其是原型，你可以先看它生成的页面，再通过“这个按钮应该放在下面”“这个流程太复杂了”“我希望用户打开 App 就能看到今天的任务”这样的自然语言不断调整。</p>
+<p>你最终要建立的不是一堆孤立的提示词，而是一套可以反复执行、能够检查结果、允许修改方向的产品开发流程。</p> </article> <hr class="my-8 border-dashed"> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/2026-10-15-AI开发流程.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8"> <li> <a href="/tags/ai/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-2"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> AI </a> </li><li> <a href="/tags/agent/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-3"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> agent </a> </li><li> <a href="/tags/需求开发/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-4"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 需求开发 </a> </li> </ul> <div id="btt-btn-container" class="fixed end-4 bottom-8 z-50 md:sticky md:end-auto md:float-end md:me-1 translate-y-14 opacity-0 transition duration-500"> <button data-button="back-to-top" class="group relative bg-background px-2 py-1 size-14 rounded-full shadow-xl md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg"> <span id="progress-indicator" class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"></span> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block rotate-90 md:hidden"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg> <span class="sr-only text-sm group-hover:text-accent md:not-sr-only"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M16 9l-4 -4" /><path d="M8 9l4 -4" /></svg>
+Back To Top
+</span> </button> </div> <script data-astro-rerun>
+  /** Scrolls the document to the top when
+   * the "Back to Top" button is clicked. */
+  function backToTop() {
+    const rootElement = document.documentElement;
+    const btnContainer = document.querySelector("#btt-btn-container");
+    const backToTopBtn = document.querySelector("[data-button='back-to-top']");
+    const progressIndicator = document.querySelector("#progress-indicator");
+
+    if (!rootElement || !btnContainer || !backToTopBtn || !progressIndicator)
+      return;
+
+    // Attach click event handler for back-to-top button
+    backToTopBtn.addEventListener("click", () => {
+      document.body.scrollTop = 0; // For Safari
+      document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+    });
+
+    // Handle button visibility according to scroll position
+    let lastVisible = null;
+    function handleScroll() {
+      const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
+      const scrollTop = rootElement.scrollTop;
+      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+
+      progressIndicator.style.setProperty(
+        "background-image",
+        `conic-gradient(var(--accent), var(--accent) ${scrollPercent}%, transparent ${scrollPercent}%)`
+      );
+
+      const isVisible = scrollTop / scrollTotal > 0.3;
+
+      if (isVisible !== lastVisible) {
+        btnContainer.classList.toggle("opacity-100", isVisible);
+        btnContainer.classList.toggle("translate-y-0", isVisible);
+        btnContainer.classList.toggle("opacity-0", !isVisible);
+        btnContainer.classList.toggle("translate-y-14", !isVisible);
+        lastVisible = isVisible;
+      }
+    }
+
+    let ticking = false;
+    document.addEventListener("scroll", () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+  backToTop();
+</script> <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start"><span class="italic">Share this post on:</span><div class="text-center"><a href="mailto:?subject=See%20this%20post&#38;body=https://henuhaigang.github.io/posts/2026-10-15-ai%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B/" title="Share this post via email" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg><span class="sr-only">Share this post via email</span> </a></div></div> <hr class="my-6 border-dashed"> <!-- Previous/Next Post Buttons --> <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">  <a href="/posts/2026-09-28-jvm-gc-cms-g1-zgc深度解析" class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"> <div> <span>Next Post</span> <div class="text-sm text-accent/85">JVM GC 深度解析：CMS、G1、ZGC 原理、优劣与选型指南</div> </div> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block flex-none rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg> </a> </div> </main> <footer class="app-layout mt-auto"> <div class="py-6 sm:py-4 border-t border-border flex flex-col items-center justify-between sm:flex-row-reverse"> <div class="flex flex-wrap items-center gap-1"> <a href="https://github.com/henuhaigang" title="scorpion's blog on GitHub" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg> <span class="sr-only">scorpion&#39;s blog on GitHub</span>  </a><a href="mailto:guangzhinew@gmail.com" title="Send an email to scorpion's blog" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg> <span class="sr-only">Send an email to scorpion&#39;s blog</span>  </a> </div> <div class="my-2 flex flex-col items-center whitespace-nowrap sm:flex-row"> <span>Copyright &#169; 2026</span> <span class="hidden sm:inline">&nbsp;|&nbsp;</span> <span>All rights reserved.</span> </div> </div> </footer>  </body></html> <script data-astro-rerun>
+  /** Create a progress indicator
+   *  at the top */
+  function createProgressBar() {
+    // Create the main container div
+    const progressContainer = document.createElement("div");
+    progressContainer.className =
+      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+
+    // Create the progress bar div
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    progressBar.id = "myBar";
+
+    // Append the progress bar to the progress container
+    progressContainer.appendChild(progressBar);
+
+    // Append the progress container to the document body or any other desired parent element
+    document.body.appendChild(progressContainer);
+  }
+  createProgressBar();
+
+  /** Update the progress bar
+   *  when user scrolls */
+  function updateScrollProgress() {
+    document.addEventListener("scroll", () => {
+      const winScroll =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const height =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      if (document) {
+        const myBar = document.getElementById("myBar");
+        if (myBar) {
+          myBar.style.width = scrolled + "%";
+        }
+      }
+    });
+  }
+  updateScrollProgress();
+
+  /** Attaches links to headings in the document,
+   *  allowing sharing of sections easily */
+  function addHeadingLinks() {
+    const headings = Array.from(
+      document.querySelectorAll("h2, h3, h4, h5, h6")
+    );
+    for (const heading of headings) {
+      heading.classList.add("group");
+      const link = document.createElement("a");
+      link.className =
+        "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+      link.href = "#" + heading.id;
+
+      const span = document.createElement("span");
+      span.ariaHidden = "true";
+      span.innerText = "#";
+      link.appendChild(span);
+      heading.appendChild(link);
+    }
+  }
+  addHeadingLinks();
+
+  /** Attaches copy buttons to code blocks in the document,
+   * allowing users to copy code easily. */
+  function attachCopyButtons() {
+    const copyButtonLabel = "Copy";
+    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+
+    for (const codeBlock of codeBlocks) {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+
+      // Check if --file-name-offset custom property exists
+      const computedStyle = getComputedStyle(codeBlock);
+      const hasFileNameOffset =
+        computedStyle.getPropertyValue("--file-name-offset").trim() !== "";
+
+      // Determine the top positioning class
+      const topClass = hasFileNameOffset
+        ? "top-(--file-name-offset)"
+        : "-top-3";
+
+      const copyButton = document.createElement("button");
+      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+      copyButton.innerHTML = copyButtonLabel;
+      codeBlock.setAttribute("tabindex", "0");
+      codeBlock.appendChild(copyButton);
+
+      // wrap codebock with relative parent element
+      codeBlock?.parentNode?.insertBefore(wrapper, codeBlock);
+      wrapper.appendChild(codeBlock);
+
+      copyButton.addEventListener("click", async () => {
+        await copyCode(codeBlock, copyButton);
+      });
+    }
+
+    async function copyCode(block, button) {
+      const code = block.querySelector("code");
+      const text = code?.innerText;
+
+      await navigator.clipboard.writeText(text ?? "");
+
+      // visual feedback that task is completed
+      button.innerText = "Copied";
+
+      setTimeout(() => {
+        button.innerText = copyButtonLabel;
+      }, 700);
+    }
+  }
+  attachCopyButtons();
+
+  /* Go to page start after page swap */
+  document.addEventListener("astro:after-swap", () =>
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+  );
+</script>
