@@ -1,0 +1,823 @@
+<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="canonical" href="https://henuhaigang.github.io/posts/java-%E9%94%81/"><meta name="generator" content="Astro v5.16.6"><!-- General Meta Tags --><title>synchronized(this)、synchronized(类名.class) 和 synchronized(lock) 记录 | scorpion&#39;s blog</title><meta name="title" content="synchronized(this)、synchronized(类名.class) 和 synchronized(lock) 记录 | scorpion's blog"><meta name="description" content="java锁"><meta name="author" content="henuhaigang"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="synchronized(this)、synchronized(类名.class) 和 synchronized(lock) 记录 | scorpion's blog"><meta property="og:description" content="java锁"><meta property="og:url" content="https://henuhaigang.github.io/posts/java-%E9%94%81/"><meta property="og:image" content="https://henuhaigang.github.io/posts/java-%E9%94%81/index.png"><!-- Article Published/Modified time --><meta property="article:published_time" content="2026-10-29T00:59:04.866Z"><meta property="article:modified_time" content="2026-10-29T00:59:04.866Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://henuhaigang.github.io/posts/java-%E9%94%81/"><meta property="twitter:title" content="synchronized(this)、synchronized(类名.class) 和 synchronized(lock) 记录 | scorpion's blog"><meta property="twitter:description" content="java锁"><meta property="twitter:image" content="https://henuhaigang.github.io/posts/java-%E9%94%81/index.png"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"synchronized(this)、synchronized(类名.class) 和 synchronized(lock) 记录 | scorpion's blog","image":"https://henuhaigang.github.io/posts/java-%E9%94%81/index.png","datePublished":"2026-10-29T00:59:04.866Z","dateModified":"2026-10-29T00:59:04.866Z","author":[{"@type":"Person","name":"henuhaigang","url":"https://github.com/henuhaigang"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="scorpion's blog" href="https://henuhaigang.github.io/rss.xml"><meta name="theme-color" content=""><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.QW52Ox2j.js"></script><script src="/toggle-theme.js"></script><link rel="stylesheet" href="/_astro/about.CNREz0iA.css">
+<style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media (prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
+:where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
+</style><style>[data-astro-transition-scope="astro-fam6wyqg-1"] { view-transition-name: synchronized-this-\3001synchronized-\7C7B\540D-class-\548C-synchronized-lock-\8BB0\5F55; }@layer astro { ::view-transition-old(synchronized-this-\3001synchronized-\7C7B\540D-class-\548C-synchronized-lock-\8BB0\5F55) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(synchronized-this-\3001synchronized-\7C7B\540D-class-\548C-synchronized-lock-\8BB0\5F55) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(synchronized-this-\3001synchronized-\7C7B\540D-class-\548C-synchronized-lock-\8BB0\5F55) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(synchronized-this-\3001synchronized-\7C7B\540D-class-\548C-synchronized-lock-\8BB0\5F55) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-2"] { view-transition-name: \7B97\6CD5; }@layer astro { ::view-transition-old(\7B97\6CD5) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(\7B97\6CD5) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(\7B97\6CD5) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(\7B97\6CD5) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-3"] { view-transition-name: leet-code; }@layer astro { ::view-transition-old(leet-code) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(leet-code) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(leet-code) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(leet-code) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style></head> <body data-astro-cid-sckkx6r4>  <a id="skip-to-content" href="#main-content" class="absolute start-16 -top-full z-50 bg-background px-3 py-2 text-accent backdrop-blur-lg transition-all focus:top-4">
+Skip to content
+</a> <header class="app-layout flex flex-col items-center justify-between sm:flex-row"> <div id="top-nav-wrap" class="py-4 sm:py-6 border-b border-border relative w-full bg-background flex items-baseline justify-between sm:items-center"> <a href="/" class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"> scorpion&#39;s blog </a> <nav id="nav-menu" class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"> <button id="menu-btn" class="focus-outline self-end p-2 sm:hidden" aria-label="Open Menu" aria-expanded="false" aria-controls="menu-items"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden" id="close-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-menu-deep" id="menu-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6h16" /><path d="M7 12h13" /><path d="M10 18h10" /></svg> </button> <ul id="menu-items" class="mt-4 grid w-44 grid-cols-2 place-content-center gap-2 [&#38;>li>a]:block [&#38;>li>a]:px-4 [&#38;>li>a]:py-3 [&#38;>li>a]:text-center [&#38;>li>a]:font-medium [&#38;>li>a]:hover:text-accent sm:[&#38;>li>a]:px-2 sm:[&#38;>li>a]:py-1 hidden sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0"> <li class="col-span-2"> <a href="/posts" class="active-nav">
+Posts
+</a> </li> <li class="col-span-2"> <a href="/tags">
+Tags
+</a> </li> <li class="col-span-2"> <a href="/about">
+About
+</a> </li> <li class="col-span-2"> <a href="/archives" title="Archives" aria-label="archives" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex justify-center p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden sm:inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" /><path d="M10 12l4 0" /></svg> <span class="sm:sr-only">Archives</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <a href="/search" title="Search" aria-label="search" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg> <span class="sr-only">Search</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <button id="theme-btn" class="focus-outline relative size-12 p-4 sm:size-8 hover:[&>svg]:stroke-accent" title="Toggles light & dark" aria-label="auto" aria-live="polite"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg> </button> </li> </ul> </nav> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <div class="app-layout flex items-center justify-start"><a id="back-button" href="/" class="group inline-flex items-center gap-1 hover:text-accent focus-outline -ms-2 mt-8 mb-2 hover:text-foreground/75"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg><span>Go back</span> </a></div><script type="module">function o(){const t=document.querySelector("#back-button"),e=sessionStorage.getItem("backUrl");e&&t&&(t.href=e)}document.addEventListener("astro:page-load",o);o();</script> <main id="main-content" class="app-layout pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl" data-astro-transition-scope="astro-fam6wyqg-1"> synchronized(this)、synchronized(类名.class) 和 synchronized(lock) 记录 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2026-10-29T00:59:04.866Z">29 Oct, 2026</time> </div> <span aria-hidden="true" class="max-sm:hidden">|</span> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/Java 锁.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent max-sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> </div> <article id="article" class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <hr>
+<h1 id="synchronizedthissynchronized类名class-和-synchronizedlock-记录"><code>synchronized(this)</code>、<code>synchronized(类名.class)</code> 和 <code>synchronized(lock)</code> 记录</h1>
+<p>我们把 <code>synchronized(this)</code>、<code>synchronized(类名.class)</code> 和 <code>synchronized(lock)</code> 放在一起，从 <strong>锁的本质、锁定对象、并发范围、JVM 底层、实际场景、常见陷阱</strong> 六个方面彻底梳理。</p>
+<p>这三个写法在语法上很相似，但它们锁定的对象不同，因此决定了哪些线程会互相阻塞。</p>
+<p>先记住最重要的一句话：</p>
+<p><strong><code>synchronized</code> 决定如何获取和释放监视器，而 <code>this</code>、<code>Class</code> 对象和 <code>lock</code> 决定大家竞争的是哪一把锁。</strong></p>
+<h1 id="一先看三种写法的本质区别">一、先看三种写法的本质区别</h1>
+<h2 id="1-synchronizedthis">1. <code>synchronized(this)</code></h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> increment</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#7FDBCA">this</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">            // 临界区</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p><code>this</code> 表示当前对象实例。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> c1</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Counter</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> c2</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Counter</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<p>那么：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (c1) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 临界区 A</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>与：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (c2) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 临界区 B</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>使用的不是同一个锁。</p>
+<p>因此，两个线程分别锁住 <code>c1</code> 和 <code>c2</code> 时，<strong>不会仅仅因为执行相同的代码，就互相阻塞</strong>。</p>
+<p>但如果两个线程锁定同一个实例：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (c1) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 临界区 A</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>以及：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (c1) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 临界区 B</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>它们就会竞争同一个监视器。</p>
+<h3 id="特点">特点</h3>
+<ul>
+<li>锁的粒度：实例级别。</li>
+<li>锁的范围：同一个实例。</li>
+<li>不同实例：默认不互斥。</li>
+<li>典型用途：保护实例字段、实例内部状态。</li>
+<li>主要风险：外部代码可以获得实例引用，进而影响该实例上的锁竞争。</li>
+</ul>
+<hr>
+<h2 id="2-synchronized-类名class">2. <code>synchronized (类名.class)</code></h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> increment</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">Counter</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">class</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">            // 临界区</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p><code>Counter.class</code> 是代表 <code>Counter</code> 这个运行时类的 <code>Class</code> 对象。</p>
+<p>假设：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> c1</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Counter</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> c2</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Counter</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<p>无论线程通过 <code>c1</code> 还是 <code>c2</code> 调用方法，只要它们进入的代码都锁定同一个 <code>Counter.class</code> 对象，就会竞争同一把锁。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> methodA</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">Counter</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">class</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">            System</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">out</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">println</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">A</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> methodB</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">Counter</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">class</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">            System</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">out</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">println</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">B</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>即使：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> c1</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Counter</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> c2</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Counter</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<p>线程 A 调用：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">c1</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">methodA</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<p>线程 B 调用：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">c2</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">methodB</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<p>两个线程仍然需要竞争同一个类锁。</p>
+<h3 id="特点-1">特点</h3>
+<ul>
+<li>锁的粒度：特定运行时类对应的 <code>Class</code> 对象。</li>
+<li>锁的范围：所有使用同一个 <code>Class</code> 对象的同步代码。</li>
+<li>不同实例：也会互斥。</li>
+<li>典型用途：保护类级别的共享状态。</li>
+<li>主要风险：锁的影响范围较大，而且其他代码也可以锁定这个公开可获得的 <code>Class</code> 对象。</li>
+</ul>
+<p>注意：这里的“类级别”不是指所有类加载器加载的同名类。不同类加载器可以加载出不同的 <code>Class</code> 对象，因此可能对应不同的类锁。</p>
+<hr>
+<h2 id="3-synchronizedlock">3. <code>synchronized(lock)</code></h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> int</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> count</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> final</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> Object</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> lock</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Object</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> increment</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (lock) {</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">            count</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">++</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>这里的 <code>lock</code> 是专门创建的一个普通 Java 对象。</p>
+<p>它没有特殊的加锁能力。它之所以能用于 <code>synchronized</code>，是因为 Java 允许使用任何非 <code>null</code> 对象引用作为内置锁的目标。</p>
+<p>关键在于：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> final</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> Object</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> lock</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Object</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<ul>
+<li><code>private</code>：限制外部代码直接访问这个字段。</li>
+<li><code>final</code>：避免这个字段被重新赋值为另一个对象。</li>
+<li><code>new Object()</code>：提供一个独立的对象身份。</li>
+</ul>
+<p>这样就可以将内部同步机制与 <code>Counter</code> 实例本身分离。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> c1</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Counter</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (c1) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // 锁定 c1 本身</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>这不会直接阻塞：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">c1</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">increment</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<p>因为 <code>increment()</code> 锁定的是 <code>c1.lock</code>，不是 <code>c1</code>。</p>
+<p>但如果其他代码获得了同一个 <code>lock</code> 对象的引用，它仍然可以竞争这把锁。因此，封装锁对象非常重要。</p>
+<h3 id="特点-2">特点</h3>
+<ul>
+<li>锁的粒度：由你选择的对象决定。</li>
+<li>锁的范围：所有使用同一个 <code>lock</code> 对象的同步代码。</li>
+<li>不同锁对象：默认不互斥。</li>
+<li>典型用途：保护内部共享状态、隔离外部锁竞争。</li>
+<li>主要风险：锁对象泄露、锁对象被替换，或者不同方法使用了不同的锁来保护同一份状态。</li>
+</ul>
+<hr>
+<h1 id="二三种锁的对比总表">二、三种锁的对比总表</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>对比维度</th><th><code>synchronized(this)</code></th><th><code>synchronized(Counter.class)</code></th><th><code>synchronized(lock)</code></th></tr></thead><tbody><tr><td>锁定对象</td><td>当前实例</td><td><code>Counter</code> 的 <code>Class</code> 对象</td><td><code>lock</code> 指向的对象</td></tr><tr><td>锁的范围</td><td>同一个实例</td><td>同一个运行时类对应的 <code>Class</code> 对象</td><td>同一个锁对象</td></tr><tr><td>不同实例之间是否互斥</td><td>通常不互斥</td><td>使用同一 <code>Class</code> 对象时互斥</td><td>取决于是否共享同一个锁对象</td></tr><tr><td>是否需要创建额外锁对象</td><td>不需要</td><td>不需要</td><td>通常需要</td></tr><tr><td>能否用于保护实例字段</td><td>可以</td><td>可以，但会扩大竞争范围</td><td>可以</td></tr><tr><td>能否用于保护静态共享状态</td><td>可以，但不能仅靠它实现跨实例互斥</td><td>可以</td><td>可以，前提是所有相关访问都使用同一把锁</td></tr><tr><td>外部能否直接获得锁对象</td><td>通常能获得实例引用</td><td>通常能通过类名获取</td><td><code>private</code> 锁字段可以限制直接访问</td></tr><tr><td>能否控制多个资源使用不同的锁</td><td>可以，但需要不同实例或其他锁对象</td><td>通常不适合细分多个资源</td><td>可以创建多个独立锁对象</td></tr><tr><td>典型场景</td><td>保护实例内部状态</td><td>保护类级共享状态</td><td>封装内部同步机制</td></tr></tbody></table>
+<p>注意，表格中的“通常”很重要：真正决定互斥关系的，不是变量名字，也不是代码写在哪里，而是线程最终获取的是否为同一个对象的监视器。</p>
+<hr>
+<h1 id="三用一个例子彻底理解三个对象三把锁">三、用一个例子彻底理解：三个对象、三把锁</h1>
+<p>假设我们有下面的类：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> Demo</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> final</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> Object</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> lock</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Object</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> lockThis</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#7FDBCA">this</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">            System</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">out</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">println</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">锁住当前实例</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> lockClass</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">Demo</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">class</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">            System</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">out</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">println</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">锁住 Class 对象</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> lockObject</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (lock) {</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">            System</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">out</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">println</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#22863A;--shiki-dark:#ECC48D">锁住内部 lock</span><span style="--shiki-light:#22863A;--shiki-dark:#D9F5DD">"</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>创建两个实例：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Demo</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> d1</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Demo</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">Demo</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> d2</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Demo</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<p>此时存在以下几个锁对象：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="text"><code><span class="line"><span>d1 ──────────────────── 实例锁 A</span></span>
+<span class="line"><span>d2 ──────────────────── 实例锁 B</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Demo.class ───────────── 类锁 C</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>d1.lock ──────────────── 内部锁 D</span></span>
+<span class="line"><span>d2.lock ──────────────── 内部锁 E</span></span></code></pre>
+<p>在这个例子中：</p>
+<ul>
+<li><code>d1</code> 和 <code>d2</code> 是两个不同的实例。</li>
+<li><code>Demo.class</code> 是它们对应的同一个运行时类的 <code>Class</code> 对象。</li>
+<li><code>d1.lock</code> 和 <code>d2.lock</code> 是分别在两个实例创建时初始化的不同对象。</li>
+</ul>
+<p>因此，锁的竞争关系如下。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>线程 A</th><th>线程 B</th><th>是否会因为同一把锁而互斥</th></tr></thead><tbody><tr><td><code>synchronized(d1)</code></td><td><code>synchronized(d1)</code></td><td>会</td></tr><tr><td><code>synchronized(d1)</code></td><td><code>synchronized(d2)</code></td><td>不会</td></tr><tr><td><code>synchronized(Demo.class)</code></td><td><code>synchronized(Demo.class)</code></td><td>会</td></tr><tr><td><code>synchronized(d1)</code></td><td><code>synchronized(Demo.class)</code></td><td>不会</td></tr><tr><td><code>synchronized(d1.lock)</code></td><td><code>synchronized(d1.lock)</code></td><td>会</td></tr><tr><td><code>synchronized(d1.lock)</code></td><td><code>synchronized(d2.lock)</code></td><td>不会</td></tr><tr><td><code>synchronized(d1)</code></td><td><code>synchronized(d1.lock)</code></td><td>不会</td></tr></tbody></table>
+<p>这里的“不会”是指不会因为这两处同步使用了同一个监视器而互斥。它们仍可能因其他锁、线程调度、资源争用等原因产生等待。</p>
+<p>另外，如果两个方法都使用 <code>synchronized(this)</code>，但一个方法通过 <code>d1</code> 调用、另一个通过 <code>d2</code> 调用，那么它们锁定的不是同一个对象。</p>
+<p><strong>理解 Java 内置锁，最重要的是跟踪锁对象的引用，而不是只看方法名。</strong></p>
+<hr>
+<h1 id="四一个非常容易踩坑的问题实例方法锁和类锁能不能互斥">四、一个非常容易踩坑的问题：实例方法锁和类锁能不能互斥？</h1>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> int</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> count</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> synchronized</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> increment</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        count</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">++</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> static</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> synchronized</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> reset</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">        // 重置静态状态</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>有人可能会认为：既然它们都在 <code>Counter</code> 类中，那么执行时应该互斥。</p>
+<p>其实不是。</p>
+<p>实例同步方法：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> synchronized</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> increment</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span></span></code></pre>
+<p>使用当前实例，也就是 <code>this</code>。</p>
+<p>静态同步方法：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> static</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> synchronized</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> reset</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span></span></code></pre>
+<p>使用 <code>Counter.class</code> 对象。</p>
+<p>它们是两把不同的锁。</p>
+<p>因此，即使线程 A 正在执行：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">counter</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">increment</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<p>线程 B 也可以同时执行：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">Counter</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">reset</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span></code></pre>
+<p>只要没有其他同步关系阻止它们。</p>
+<p>如果你需要这两个方法互斥，就必须明确设计共同的锁。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> Counter</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> static</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> final</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> Object</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> LOCK</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Object</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> int</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> count</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> increment</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (LOCK) {</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">            count</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA">++</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> static</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> reset</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (LOCK) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">            // 重置状态</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>现在两个方法都竞争同一个 <code>LOCK</code>。</p>
+<p>但这里还有一个重要的设计问题：如果 <code>count</code> 是每个实例独立拥有的状态，却让所有实例共享一把静态锁，就可能造成不必要的竞争。</p>
+<p>因此，<strong>只有在业务确实需要跨实例互斥时，才应该考虑使用静态共享锁。</strong></p>
+<hr>
+<h1 id="五jvm-底层有什么区别">五、JVM 底层有什么区别？</h1>
+<p>这部分与你之前研究的 <code>monitorenter</code>、<code>monitorexit</code> 直接相关。</p>
+<p>先看代码：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#7FDBCA">this</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // A</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">Demo</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">class</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // B</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (lock) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">    // C</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>对于同步代码块，编译器会生成相应的字节码，典型形式包括：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="text"><code><span class="line"><span>monitorenter</span></span>
+<span class="line"><span>    ...</span></span>
+<span class="line"><span>monitorexit</span></span></code></pre>
+<p>这三种写法在同步语义上没有本质区别。</p>
+<p>区别主要在于：<strong>执行 <code>monitorenter</code> 时，操作数栈上提供的是哪个对象引用。</strong></p>
+<ul>
+<li><code>this</code>：当前实例引用。</li>
+<li><code>Demo.class</code>：对应的 <code>Class</code> 对象引用。</li>
+<li><code>lock</code>：锁字段当前指向的对象引用。</li>
+</ul>
+<p>JVM 根据该对象执行监视器进入操作。</p>
+<p>如果一个线程已经持有这个监视器，再次进入时可以重入；如果其他线程持有它，则当前线程需要等待获取。</p>
+<p>所以不能认为：</p>
+<ul>
+<li><code>this</code> 使用一种特殊的锁算法。</li>
+<li><code>.class</code> 使用另一种特殊的锁算法。</li>
+<li><code>new Object()</code> 使用第三种锁算法。</li>
+</ul>
+<p>它们使用的是 Java 内置锁机制，区别主要是锁定的对象身份。</p>
+<h2 id="51-三种写法对应的字节码有什么不同">5.1 三种写法对应的字节码有什么不同？</h2>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> lockThis</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#7FDBCA">this</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">        work</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> lockClass</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">Demo</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">class</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">        work</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> lockObject</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (lock) {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">        work</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>从概念上看：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Java 表达式</th><th>获取对象引用的来源</th><th>进入的监视器</th></tr></thead><tbody><tr><td><code>this</code></td><td>当前实例引用</td><td>当前实例关联的监视器</td></tr><tr><td><code>Demo.class</code></td><td>类字面量对应的 <code>Class</code> 对象</td><td>该 <code>Class</code> 对象关联的监视器</td></tr><tr><td><code>lock</code></td><td>读取字段获得的对象引用</td><td>该对象关联的监视器</td></tr></tbody></table>
+<p>它们最终都会落实为对特定对象监视器的同步操作。</p>
+<p>对于 <code>synchronized</code> 方法，情况稍有不同：实例同步方法通常通过 <code>ACC_SYNCHRONIZED</code> 方法标志表达同步语义，静态同步方法也使用该标志，但其锁定目标不同。JVM 在方法调用和返回过程中处理监视器的进入与退出，而不是要求方法体内一定出现显式的 <code>monitorenter</code> 和 <code>monitorexit</code>。</p>
+<hr>
+<h1 id="六应该如何选择给你一套实战规则">六、应该如何选择？给你一套实战规则</h1>
+<p>不要死记“实例用 <code>this</code>，静态用 <code>.class</code>，内部用 <code>Object</code>”。这只是初步规则，真正应该从共享状态和同步边界出发。</p>
+<h2 id="场景一保护当前对象的实例字段">场景一：保护当前对象的实例字段</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> Account</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> int</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> balance</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> synchronized</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> deposit</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">(</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">int</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D7DBE0"> amount</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">)</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        balance </span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">+=</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> amount;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> synchronized</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> int</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> getBalance</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        return</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> balance;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p><strong>优先考虑实例锁。</strong></p>
+<p>因为账户余额属于当前实例，而相关方法都使用同一个实例的监视器。</p>
+<p>如果不希望外部代码锁定账户对象影响内部方法，则可以考虑专门的内部锁。</p>
+<h2 id="场景二保护静态共享状态">场景二：保护静态共享状态</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> IdGenerator</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> static</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> long</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> id</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> static</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> long</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> nextId</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">IdGenerator</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">class</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">            return</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> ++</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">id;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>类锁能够让所有通过同一个 <code>IdGenerator.class</code> 对象获取锁的代码互斥。</p>
+<p>也可以使用专门的静态锁：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> IdGenerator</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> static</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> final</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> Object</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> LOCK</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Object</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> static</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> long</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> id</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> static</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> long</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> nextId</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (LOCK) {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">            return</span><span style="--shiki-light:#D32F2F;--shiki-dark:#7FDBCA"> ++</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">id;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>第二种方式可以把同步对象与 <code>Class</code> 对象分离，降低其他代码意外竞争类锁的可能性。</p>
+<h2 id="场景三一个类有多个独立资源">场景三：一个类有多个独立资源</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#FFCB8B"> ResourceManager</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> final</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> Object</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> userLock</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Object</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> final</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> Object</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> orderLock</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> new</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> Object</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> updateUser</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (userLock) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">            // 更新用户资源</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">    public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> updateOrder</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (orderLock) {</span></span>
+<span class="line"><span style="--shiki-light:#C2C3C5;--shiki-light-font-style:inherit;--shiki-dark:#637777;--shiki-dark-font-style:italic">            // 更新订单资源</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">        }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>如果这两项操作不需要共同维护一个跨资源的不变量，就可以使用不同的锁。</p>
+<p>这样更新用户与更新订单时，不会仅仅因为使用了同一个监视器而互相阻塞。</p>
+<p>不过，如果一个业务操作同时需要修改用户和订单状态，就需要重新考虑多个锁的获取顺序，以及如何保证跨资源状态的一致性。</p>
+<h2 id="场景四只需要一个简单原子操作">场景四：只需要一个简单原子操作</h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">private</span><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic"> final</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> java</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">util</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">concurrent</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">atomic</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA">AtomicInteger</span><span style="--shiki-light:#24292EFF;--shiki-dark:#C5E478"> count</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> =</span></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">        new</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> java</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">util</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">concurrent</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">atomic</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">AtomicInteger</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">public</span><span style="--shiki-light:#D32F2F;--shiki-dark:#C792EA"> void</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic"> increment</span><span style="--shiki-light:#6F42C1;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> {</span></span>
+<span class="line"><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">    count</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#6F42C1;--shiki-light-font-style:inherit;--shiki-dark:#82AAFF;--shiki-dark-font-style:italic">incrementAndGet</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D9F5DD">()</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">;</span></span>
+<span class="line"><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">}</span></span></code></pre>
+<p>对于单个计数器的原子递增，通常不需要为了这个操作专门设计一把 <code>synchronized</code> 锁。</p>
+<p>但如果需要保证多个操作组成一个整体，例如“检查库存并扣减库存”，仍然需要考虑整个业务过程的原子性。</p>
+<hr>
+<h1 id="七最后给你一个架构师视角的总结">七、最后给你一个架构师视角的总结</h1>
+<p>这三种写法并不是三种不同的锁机制，而是<strong>三种不同的锁对象选择方式</strong>。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#7FDBCA">this</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">)</span></span></code></pre>
+<p>含义是：</p>
+<blockquote>
+<p>当前实例上的相关操作需要竞争同一个实例监视器。</p>
+</blockquote>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (</span><span style="--shiki-light:#1976D2;--shiki-dark:#C5E478">Demo</span><span style="--shiki-light:#212121;--shiki-dark:#D6DEEB">.</span><span style="--shiki-light:#1976D2;--shiki-light-font-style:inherit;--shiki-dark:#FAF39F;--shiki-dark-font-style:italic">class</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB">)</span></span></code></pre>
+<p>含义是：</p>
+<blockquote>
+<p>使用同一个运行时类对应的 <code>Class</code> 对象作为共同监视器。</p>
+</blockquote>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="java"><code><span class="line"><span style="--shiki-light:#D32F2F;--shiki-light-font-style:inherit;--shiki-dark:#C792EA;--shiki-dark-font-style:italic">synchronized</span><span style="--shiki-light:#24292EFF;--shiki-dark:#D6DEEB"> (lock)</span></span></code></pre>
+<p>含义是：</p>
+<blockquote>
+<p>使用指定的对象作为监视器，并可以通过封装控制这把锁的使用范围。</p>
+</blockquote>
+<p>实际做设计时，可以按以下顺序思考：</p>
+<ol>
+<li><strong>保护的是什么共享状态？</strong> 是实例字段、静态字段，还是多个资源？</li>
+<li><strong>哪些操作必须互斥？</strong> 同一实例、所有实例，还是某几个特定操作？</li>
+<li><strong>是否允许外部代码影响内部锁竞争？</strong> 如果不希望如此，可以考虑 <code>private final Object lock</code>。</li>
+<li><strong>锁的范围是否过大？</strong> 不必要的全局锁或类锁会造成额外竞争。</li>
+<li><strong>是否需要更高级的同步能力？</strong> 如果需要超时、公平策略或多个条件队列，可以考虑 <code>ReentrantLock</code>。</li>
+</ol>
+<p><strong>最值得记住的一点：锁的设计首先是共享状态和并发边界的设计，其次才是选择 <code>this</code>、<code>.class</code> 还是 <code>new Object()</code> 的语法问题。</strong></p> </article> <hr class="my-8 border-dashed"> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/Java 锁.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8"> <li> <a href="/tags/算法/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-2"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 算法 </a> </li><li> <a href="/tags/leet-code/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-3"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> LeetCode </a> </li> </ul> <div id="btt-btn-container" class="fixed end-4 bottom-8 z-50 md:sticky md:end-auto md:float-end md:me-1 translate-y-14 opacity-0 transition duration-500"> <button data-button="back-to-top" class="group relative bg-background px-2 py-1 size-14 rounded-full shadow-xl md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg"> <span id="progress-indicator" class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"></span> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block rotate-90 md:hidden"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg> <span class="sr-only text-sm group-hover:text-accent md:not-sr-only"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M16 9l-4 -4" /><path d="M8 9l4 -4" /></svg>
+Back To Top
+</span> </button> </div> <script data-astro-rerun>
+  /** Scrolls the document to the top when
+   * the "Back to Top" button is clicked. */
+  function backToTop() {
+    const rootElement = document.documentElement;
+    const btnContainer = document.querySelector("#btt-btn-container");
+    const backToTopBtn = document.querySelector("[data-button='back-to-top']");
+    const progressIndicator = document.querySelector("#progress-indicator");
+
+    if (!rootElement || !btnContainer || !backToTopBtn || !progressIndicator)
+      return;
+
+    // Attach click event handler for back-to-top button
+    backToTopBtn.addEventListener("click", () => {
+      document.body.scrollTop = 0; // For Safari
+      document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+    });
+
+    // Handle button visibility according to scroll position
+    let lastVisible = null;
+    function handleScroll() {
+      const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
+      const scrollTop = rootElement.scrollTop;
+      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+
+      progressIndicator.style.setProperty(
+        "background-image",
+        `conic-gradient(var(--accent), var(--accent) ${scrollPercent}%, transparent ${scrollPercent}%)`
+      );
+
+      const isVisible = scrollTop / scrollTotal > 0.3;
+
+      if (isVisible !== lastVisible) {
+        btnContainer.classList.toggle("opacity-100", isVisible);
+        btnContainer.classList.toggle("translate-y-0", isVisible);
+        btnContainer.classList.toggle("opacity-0", !isVisible);
+        btnContainer.classList.toggle("translate-y-14", !isVisible);
+        lastVisible = isVisible;
+      }
+    }
+
+    let ticking = false;
+    document.addEventListener("scroll", () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+  backToTop();
+</script> <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start"><span class="italic">Share this post on:</span><div class="text-center"><a href="mailto:?subject=See%20this%20post&#38;body=https://henuhaigang.github.io/posts/java-%E9%94%81/" title="Share this post via email" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg><span class="sr-only">Share this post via email</span> </a></div></div> <hr class="my-6 border-dashed"> <!-- Previous/Next Post Buttons --> <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">  <a href="/posts/2026-10-15-ai开发流程" class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"> <div> <span>Next Post</span> <div class="text-sm text-accent/85">从0使用AI开发一个系统</div> </div> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block flex-none rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg> </a> </div> </main> <footer class="app-layout mt-auto"> <div class="py-6 sm:py-4 border-t border-border flex flex-col items-center justify-between sm:flex-row-reverse"> <div class="flex flex-wrap items-center gap-1"> <a href="https://github.com/henuhaigang" title="scorpion's blog on GitHub" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg> <span class="sr-only">scorpion&#39;s blog on GitHub</span>  </a><a href="mailto:guangzhinew@gmail.com" title="Send an email to scorpion's blog" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg> <span class="sr-only">Send an email to scorpion&#39;s blog</span>  </a> </div> <div class="my-2 flex flex-col items-center whitespace-nowrap sm:flex-row"> <span>Copyright &#169; 2026</span> <span class="hidden sm:inline">&nbsp;|&nbsp;</span> <span>All rights reserved.</span> </div> </div> </footer>  </body></html> <script data-astro-rerun>
+  /** Create a progress indicator
+   *  at the top */
+  function createProgressBar() {
+    // Create the main container div
+    const progressContainer = document.createElement("div");
+    progressContainer.className =
+      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+
+    // Create the progress bar div
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    progressBar.id = "myBar";
+
+    // Append the progress bar to the progress container
+    progressContainer.appendChild(progressBar);
+
+    // Append the progress container to the document body or any other desired parent element
+    document.body.appendChild(progressContainer);
+  }
+  createProgressBar();
+
+  /** Update the progress bar
+   *  when user scrolls */
+  function updateScrollProgress() {
+    document.addEventListener("scroll", () => {
+      const winScroll =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const height =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      if (document) {
+        const myBar = document.getElementById("myBar");
+        if (myBar) {
+          myBar.style.width = scrolled + "%";
+        }
+      }
+    });
+  }
+  updateScrollProgress();
+
+  /** Attaches links to headings in the document,
+   *  allowing sharing of sections easily */
+  function addHeadingLinks() {
+    const headings = Array.from(
+      document.querySelectorAll("h2, h3, h4, h5, h6")
+    );
+    for (const heading of headings) {
+      heading.classList.add("group");
+      const link = document.createElement("a");
+      link.className =
+        "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+      link.href = "#" + heading.id;
+
+      const span = document.createElement("span");
+      span.ariaHidden = "true";
+      span.innerText = "#";
+      link.appendChild(span);
+      heading.appendChild(link);
+    }
+  }
+  addHeadingLinks();
+
+  /** Attaches copy buttons to code blocks in the document,
+   * allowing users to copy code easily. */
+  function attachCopyButtons() {
+    const copyButtonLabel = "Copy";
+    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+
+    for (const codeBlock of codeBlocks) {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+
+      // Check if --file-name-offset custom property exists
+      const computedStyle = getComputedStyle(codeBlock);
+      const hasFileNameOffset =
+        computedStyle.getPropertyValue("--file-name-offset").trim() !== "";
+
+      // Determine the top positioning class
+      const topClass = hasFileNameOffset
+        ? "top-(--file-name-offset)"
+        : "-top-3";
+
+      const copyButton = document.createElement("button");
+      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+      copyButton.innerHTML = copyButtonLabel;
+      codeBlock.setAttribute("tabindex", "0");
+      codeBlock.appendChild(copyButton);
+
+      // wrap codebock with relative parent element
+      codeBlock?.parentNode?.insertBefore(wrapper, codeBlock);
+      wrapper.appendChild(codeBlock);
+
+      copyButton.addEventListener("click", async () => {
+        await copyCode(codeBlock, copyButton);
+      });
+    }
+
+    async function copyCode(block, button) {
+      const code = block.querySelector("code");
+      const text = code?.innerText;
+
+      await navigator.clipboard.writeText(text ?? "");
+
+      // visual feedback that task is completed
+      button.innerText = "Copied";
+
+      setTimeout(() => {
+        button.innerText = copyButtonLabel;
+      }, 700);
+    }
+  }
+  attachCopyButtons();
+
+  /* Go to page start after page swap */
+  document.addEventListener("astro:after-swap", () =>
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+  );
+</script>
