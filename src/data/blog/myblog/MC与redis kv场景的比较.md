@@ -14,8 +14,6 @@ tags:
     
 description: 分布式缓存
 ---
----
-你这段描述实际上涉及一个非常经典的后端架构问题：
 
 **为什么 Memcached（MC）在简单 Key-Value 缓存场景下，可能比 Redis 有更高的吞吐量？为什么 Redis 功能更丰富，但在某些纯缓存读取场景下反而没有 Memcached 快？**
 
