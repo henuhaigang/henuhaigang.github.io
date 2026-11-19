@@ -1,4 +1,3 @@
-
 ---
 layout:     post
 title:      mc redis  对比及相关知识记录
