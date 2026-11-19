@@ -1,0 +1,2552 @@
+<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="canonical" href="https://henuhaigang.github.io/posts/mc%E4%B8%8Eredis-kv%E5%9C%BA%E6%99%AF%E7%9A%84%E6%AF%94%E8%BE%83/"><meta name="generator" content="Astro v5.16.6"><!-- General Meta Tags --><title>mc redis  对比及相关知识记录 | scorpion&#39;s blog</title><meta name="title" content="mc redis  对比及相关知识记录 | scorpion's blog"><meta name="description" content="分布式缓存"><meta name="author" content="henuhaigang"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="mc redis  对比及相关知识记录 | scorpion's blog"><meta property="og:description" content="分布式缓存"><meta property="og:url" content="https://henuhaigang.github.io/posts/mc%E4%B8%8Eredis-kv%E5%9C%BA%E6%99%AF%E7%9A%84%E6%AF%94%E8%BE%83/"><meta property="og:image" content="https://henuhaigang.github.io/posts/mc%E4%B8%8Eredis-kv%E5%9C%BA%E6%99%AF%E7%9A%84%E6%AF%94%E8%BE%83/index.png"><!-- Article Published/Modified time --><meta property="article:published_time" content="2026-10-29T00:59:04.866Z"><meta property="article:modified_time" content="2026-10-29T00:59:04.866Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://henuhaigang.github.io/posts/mc%E4%B8%8Eredis-kv%E5%9C%BA%E6%99%AF%E7%9A%84%E6%AF%94%E8%BE%83/"><meta property="twitter:title" content="mc redis  对比及相关知识记录 | scorpion's blog"><meta property="twitter:description" content="分布式缓存"><meta property="twitter:image" content="https://henuhaigang.github.io/posts/mc%E4%B8%8Eredis-kv%E5%9C%BA%E6%99%AF%E7%9A%84%E6%AF%94%E8%BE%83/index.png"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"mc redis  对比及相关知识记录 | scorpion's blog","image":"https://henuhaigang.github.io/posts/mc%E4%B8%8Eredis-kv%E5%9C%BA%E6%99%AF%E7%9A%84%E6%AF%94%E8%BE%83/index.png","datePublished":"2026-10-29T00:59:04.866Z","dateModified":"2026-10-29T00:59:04.866Z","author":[{"@type":"Person","name":"henuhaigang","url":"https://github.com/henuhaigang"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="scorpion's blog" href="https://henuhaigang.github.io/rss.xml"><meta name="theme-color" content=""><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.QW52Ox2j.js"></script><script src="/toggle-theme.js"></script><link rel="stylesheet" href="/_astro/about.CNREz0iA.css">
+<style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media (prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
+:where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
+</style><style>[data-astro-transition-scope="astro-fam6wyqg-1"] { view-transition-name: mc-redis-\5BF9\6BD4\53CA\76F8\5173\77E5\8BC6\8BB0\5F55; }@layer astro { ::view-transition-old(mc-redis-\5BF9\6BD4\53CA\76F8\5173\77E5\8BC6\8BB0\5F55) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(mc-redis-\5BF9\6BD4\53CA\76F8\5173\77E5\8BC6\8BB0\5F55) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(mc-redis-\5BF9\6BD4\53CA\76F8\5173\77E5\8BC6\8BB0\5F55) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(mc-redis-\5BF9\6BD4\53CA\76F8\5173\77E5\8BC6\8BB0\5F55) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-fam6wyqg-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-fam6wyqg-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-2"] { view-transition-name: \5206\5E03\5F0F\7F13\5B58; }@layer astro { ::view-transition-old(\5206\5E03\5F0F\7F13\5B58) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(\5206\5E03\5F0F\7F13\5B58) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(\5206\5E03\5F0F\7F13\5B58) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(\5206\5E03\5F0F\7F13\5B58) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-3"] { view-transition-name: mc; }@layer astro { ::view-transition-old(mc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(mc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(mc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(mc) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-3"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-3"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-4"] { view-transition-name: redis; }@layer astro { ::view-transition-old(redis) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(redis) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(redis) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(redis) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-4"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-4"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style></head> <body data-astro-cid-sckkx6r4>  <a id="skip-to-content" href="#main-content" class="absolute start-16 -top-full z-50 bg-background px-3 py-2 text-accent backdrop-blur-lg transition-all focus:top-4">
+Skip to content
+</a> <header class="app-layout flex flex-col items-center justify-between sm:flex-row"> <div id="top-nav-wrap" class="py-4 sm:py-6 border-b border-border relative w-full bg-background flex items-baseline justify-between sm:items-center"> <a href="/" class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"> scorpion&#39;s blog </a> <nav id="nav-menu" class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"> <button id="menu-btn" class="focus-outline self-end p-2 sm:hidden" aria-label="Open Menu" aria-expanded="false" aria-controls="menu-items"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden" id="close-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-menu-deep" id="menu-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6h16" /><path d="M7 12h13" /><path d="M10 18h10" /></svg> </button> <ul id="menu-items" class="mt-4 grid w-44 grid-cols-2 place-content-center gap-2 [&#38;>li>a]:block [&#38;>li>a]:px-4 [&#38;>li>a]:py-3 [&#38;>li>a]:text-center [&#38;>li>a]:font-medium [&#38;>li>a]:hover:text-accent sm:[&#38;>li>a]:px-2 sm:[&#38;>li>a]:py-1 hidden sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0"> <li class="col-span-2"> <a href="/posts" class="active-nav">
+Posts
+</a> </li> <li class="col-span-2"> <a href="/tags">
+Tags
+</a> </li> <li class="col-span-2"> <a href="/about">
+About
+</a> </li> <li class="col-span-2"> <a href="/archives" title="Archives" aria-label="archives" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex justify-center p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden sm:inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" /><path d="M10 12l4 0" /></svg> <span class="sm:sr-only">Archives</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <a href="/search" title="Search" aria-label="search" class="group inline-flex items-center gap-1 hover:text-accent focus-outline flex p-3 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg> <span class="sr-only">Search</span>  </a> </li> <li class="col-span-1 flex items-center justify-center"> <button id="theme-btn" class="focus-outline relative size-12 p-4 sm:size-8 hover:[&>svg]:stroke-accent" title="Toggles light & dark" aria-label="auto" aria-live="polite"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg> </button> </li> </ul> </nav> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <div class="app-layout flex items-center justify-start"><a id="back-button" href="/" class="group inline-flex items-center gap-1 hover:text-accent focus-outline -ms-2 mt-8 mb-2 hover:text-foreground/75"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg><span>Go back</span> </a></div><script type="module">function o(){const t=document.querySelector("#back-button"),e=sessionStorage.getItem("backUrl");e&&t&&(t.href=e)}document.addEventListener("astro:page-load",o);o();</script> <main id="main-content" class="app-layout pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl" data-astro-transition-scope="astro-fam6wyqg-1"> mc redis  对比及相关知识记录 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2026-10-29T00:59:04.866Z">29 Oct, 2026</time> </div> <span aria-hidden="true" class="max-sm:hidden">|</span> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/MC与redis kv场景的比较.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent max-sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> </div> <article id="article" class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <hr>
+<p>你这段描述实际上涉及一个非常经典的后端架构问题：</p>
+<p><strong>为什么 Memcached（MC）在简单 Key-Value 缓存场景下，可能比 Redis 有更高的吞吐量？为什么 Redis 功能更丰富，但在某些纯缓存读取场景下反而没有 Memcached 快？</strong></p>
+<p>这里面最核心的区别并不是简单的「Redis 单线程，Memcached 多线程」，而是两者在以下几个方面的设计理念不同：</p>
+<ol>
+<li>内存管理：Memcached 的 Slab Allocator 与 Redis 的动态内存分配。</li>
+<li>数据组织：Memcached 的 Item/Chunk 组织方式与 Redis 的对象、字典组织方式。</li>
+<li>内存访问：内存定位、指针访问、CPU Cache 命中率。</li>
+<li>并发模型：Memcached 多线程与 Redis 命令执行模型。</li>
+<li>内存碎片：为什么 Memcached 会出现有空闲内存却无法存储数据。</li>
+<li>适用场景：什么业务适合 Memcached，什么业务适合 Redis。</li>
+</ol>
+<p>我从底层内存布局开始讲，逐步深入到 CPU、线程模型和实际业务架构。</p>
+<h1 id="一先理解两者最根本的设计差异"><strong>一、先理解两者最根本的设计差异</strong></h1>
+<p>先看一个简单场景。</p>
+<p>假设我们有一个缓存集群，需要存储 1000 万条数据：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>key1 -> value1</span></span>
+<span class="line"><span>key2 -> value2</span></span>
+<span class="line"><span>key3 -> value3</span></span>
+<span class="line"><span>...</span></span>
+<span class="line"><span>key10000000 -> value10000000</span></span></code></pre>
+<p>每条数据都是简单的字符串 Key-Value，没有 List、Set、Hash、ZSet 等复杂数据结构。</p>
+<p>两者的设计思路：</p>
+<p><strong>Memcached：以固定规格的内存块为核心</strong></p>
+<p><strong>内存池 / Slab Allocator</strong></p>
+<p><strong>Class 1</strong></p>
+<p>固定大小 Chunk</p>
+<p>Chunk 1</p>
+<p>Chunk 2</p>
+<p>Chunk 3</p>
+<p><strong>Class 2</strong></p>
+<p>固定大小 Chunk</p>
+<p>Chunk 1</p>
+<p>Chunk 2</p>
+<p>Chunk 3</p>
+<p><strong>Class 3</strong></p>
+<p>固定大小 Chunk</p>
+<p>Chunk 1</p>
+<p>Chunk 2</p>
+<p>Chunk 3</p>
+<p>不同规格的内存块分别管理，Item 放入适合自己的 Chunk。</p>
+<p>核心思想：空间规格化，降低动态分配的复杂度。</p>
+<p><strong>Redis：以动态对象和内存分配为核心</strong></p>
+<p><strong>Redis 数据字典</strong></p>
+<p>Hash Table</p>
+<p>Bucket 1</p>
+<p>指向对象</p>
+<p>Bucket 2</p>
+<p>指向对象</p>
+<p>Bucket 3</p>
+<p>指向对象</p>
+<p>Redis Object A</p>
+<p>SDS + 元数据</p>
+<p>Redis Object B</p>
+<p>SDS + 元数据</p>
+<p>根据对象大小和类型进行内存分配，底层通常使用 jemalloc。</p>
+<p>核心思想：提供丰富的数据结构和灵活的内存管理能力。</p>
+<p>注意：这只是两种内存管理思路的简化示意图，Memcached 并不是完全没有 Hash Table，Redis 也不是每次读写都要重新动态分配内存。</p>
+<h1 id="二memcached-的核心slab-allocator"><strong>二、Memcached 的核心：Slab Allocator</strong></h1>
+<p>这是理解 Memcached 性能的关键。</p>
+<h2 id="21-为什么要设计-slab"><strong>2.1 为什么要设计 Slab？</strong></h2>
+<p>先考虑一个问题：</p>
+<p>假设我们有 1GB 内存，需要存储大量 Key-Value。</p>
+<p>如果采用传统的动态内存分配：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>malloc(100);</span></span>
+<span class="line"><span>malloc(200);</span></span>
+<span class="line"><span>malloc(500);</span></span>
+<span class="line"><span>malloc(80);</span></span>
+<span class="line"><span>free(...);</span></span>
+<span class="line"><span>malloc(300);</span></span></code></pre>
+<p>不断进行内存分配、释放，会产生什么问题？</p>
+<p>例如：</p>
+<p><a href="https://images.openai.com/static-rsc-4/jG64ueS-mVlXYvWfXNXENzQK1f_Zr9mgaWY_L9rIhIMSSpcjYwjUyrE832TXX95H47Xfqcy_3jQ4HgPclhdVmtjaA0h-d9QXlOWYFDwrnOunFmANPhf9y6N2lYh0RXZ_9g1kqUUyQz8NCRDy6l0EY1FM9sqtOV7IQVVyjc-4BEI?purpose=inline">File:External Fragmentation.svg - Wikimedia Commons</a></p>
+<p><a href="https://commons.wikimedia.org/wiki/File%3AExternal_Fragmentation.svg?utm_source=chatgpt.com">commons.wikimedia.org</a></p>
+<p>假设内存布局如下：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>| 100KB 已使用 | 50KB 空闲 | 200KB 已使用 |</span></span>
+<span class="line"><span>| 80KB 空闲   | 300KB 已使用 | 100KB 空闲 |</span></span></code></pre>
+<p>现在需要申请 150KB 内存。</p>
+<p>虽然总空闲内存有：</p>
+<p>50 + 80 + 100 = 230KB</p>
+<p>但是没有任何一块连续的 150KB 空间。</p>
+<p>于是分配失败。</p>
+<p>这就是<strong>外部内存碎片（External Fragmentation）</strong>。</p>
+<p>传统 malloc/free 的内存管理在大量小对象、高频分配释放场景中，可能产生比较严重的内存碎片和管理开销。</p>
+<p>Memcached 的设计思路是：</p>
+<p>既然缓存对象大小变化很多，那么我干脆提前把内存组织成不同规格的内存块。</p>
+<p>这就是 Slab Allocator。</p>
+<h2 id="22-slab-到底是什么"><strong>2.2 Slab 到底是什么？</strong></h2>
+<p>Memcached 的内存管理主要分为三个层次：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Memcached Memory</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      v</span></span>
+<span class="line"><span>  Slab Class</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      v</span></span>
+<span class="line"><span>    Slab</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      v</span></span>
+<span class="line"><span>    Chunk</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      v</span></span>
+<span class="line"><span>    Item</span></span></code></pre>
+<p>分别解释。</p>
+<p><strong>第一层：Slab Class</strong></p>
+<p>Slab Class 是一个内存规格类别。</p>
+<p>例如：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Class</th><th>Chunk 大小</th></tr></thead><tbody><tr><td>Class 1</td><td>96 B</td></tr><tr><td>Class 2</td><td>120 B</td></tr><tr><td>Class 3</td><td>150 B</td></tr><tr><td>Class 4</td><td>187 B</td></tr><tr><td>Class 5</td><td>234 B</td></tr><tr><td>Class 6</td><td>292 B</td></tr><tr><td>Class 7</td><td>365 B</td></tr></tbody></table>
+<p>上面的数字只是为了方便理解的示例。</p>
+<p>Memcached 默认采用一定的增长因子（通常为 1.25）来生成不同规格的 Chunk。</p>
+<p>也就是说：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>96</span></span>
+<span class="line"><span>96 × 1.25 = 120</span></span>
+<span class="line"><span>120 × 1.25 = 150</span></span>
+<span class="line"><span>150 × 1.25 = 187.5</span></span>
+<span class="line"><span>...</span></span></code></pre>
+<p>不同版本、配置和对齐规则会影响实际规格。</p>
+<p><strong>第二层：Slab</strong></p>
+<p>一个 Slab 是一块实际分配的内存区域。</p>
+<p>Memcached 默认的 Slab Page 大小通常为 1MB。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Class 1</span></span>
+<span class="line"><span>    |</span></span>
+<span class="line"><span>    +---- Slab 1 (1MB)</span></span>
+<span class="line"><span>    +---- Slab 2 (1MB)</span></span>
+<span class="line"><span>    +---- Slab 3 (1MB)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Class 2</span></span>
+<span class="line"><span>    |</span></span>
+<span class="line"><span>    +---- Slab 1 (1MB)</span></span>
+<span class="line"><span>    +---- Slab 2 (1MB)</span></span></code></pre>
+<p>每个 Slab Page 被划分成若干个相同大小的 Chunk。</p>
+<p><strong>第三层：Chunk</strong></p>
+<p>Chunk 是真正分配给缓存 Item 使用的内存单元。</p>
+<p>例如：</p>
+<p>假设一个 Slab Page 大小为 1MB。</p>
+<p>Chunk 大小为 100B。</p>
+<p>那么：</p>
+<p>\[ \frac{1024 \times 1024}{100} \approx 10485 \]</p>
+<p>一个 Slab Page 可以放置约 10485 个 Chunk（这里暂时忽略页面管理开销和对齐因素）。</p>
+<p>结构如下：</p>
+<p><strong>一个 Slab Page（1MB）</strong></p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>Chunk</p>
+<p>空闲</p>
+<p>空闲</p>
+<p>空闲</p>
+<p>空闲</p>
+<p>已分配</p>
+<p>空闲</p>
+<p>示意图：每个 Chunk 的大小完全相同，实际数量取决于 Chunk 大小。</p>
+<p>这就解决了传统动态内存分配中大量不同尺寸对象造成的外部碎片问题。</p>
+<h2 id="23-memcached-如何根据-key-value-大小选择-chunk"><strong>2.3 Memcached 如何根据 Key-Value 大小选择 Chunk？</strong></h2>
+<p>假设现在有三个缓存对象：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Key A + Value A = 90B</span></span>
+<span class="line"><span>Key B + Value B = 130B</span></span>
+<span class="line"><span>Key C + Value C = 220B</span></span></code></pre>
+<p>Memcached 不会给每个对象单独申请刚好大小的内存，而是寻找一个能够容纳它的最小 Chunk。</p>
+<p>假设规格如下：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Chunk 1：100B</span></span>
+<span class="line"><span>Chunk 2：125B</span></span>
+<span class="line"><span>Chunk 3：156B</span></span>
+<span class="line"><span>Chunk 4：195B</span></span>
+<span class="line"><span>Chunk 5：244B</span></span></code></pre>
+<p>分配过程：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>对象实际大小</th><th>分配 Chunk</th><th>浪费空间</th></tr></thead><tbody><tr><td>90B</td><td>100B</td><td>10B</td></tr><tr><td>130B</td><td>156B</td><td>26B</td></tr><tr><td>220B</td><td>244B</td><td>24B</td></tr></tbody></table>
+<p>这就是 Slab 的内存分配策略：</p>
+<p><strong>一个对象只能放入一个能够容纳它的 Chunk，不能把多个 Chunk 拼起来存放一个 Item。</strong></p>
+<p>这里就出现了一个非常重要的问题：</p>
+<p>假设一个对象需要 126B，而当前最大可用 Chunk 是 125B。</p>
+<p>即使整个 Memcached 还有大量空闲内存，也不能将这个对象放入 125B 的 Chunk。</p>
+<p>它必须寻找更大的 Chunk Class。</p>
+<p>这就是你提到的「明明还有空闲内存，却无法存储」的根本原因之一。</p>
+<p>不过这里需要区分两种碎片。</p>
+<ul>
+<li>内部碎片：Chunk 分配给对象后，剩余的空间不能被其他对象使用。</li>
+<li>Class 间碎片：某个 Class 有大量空闲 Chunk，但另一个 Class 的 Chunk 已经用完。</li>
+</ul>
+<p>后者正是 Memcached 典型的内存利用率问题。</p>
+<h2 id="24-为什么会出现内存明明空闲却无法存储"><strong>2.4 为什么会出现内存明明空闲，却无法存储？</strong></h2>
+<p>这是一个非常值得深入理解的场景。</p>
+<p>假设 Memcached 总共配置了 1GB 内存。</p>
+<p>经过一段时间运行，形成如下状态：</p>
+<p><strong>Memcached 内存分布（假设数据）</strong></p>
+<p><strong>Class A：100B Chunk</strong></p>
+<p>300MB / 300MB</p>
+<p>已全部使用，没有空闲 Chunk</p>
+<p><strong>Class B：200B Chunk</strong></p>
+<p>100MB / 400MB</p>
+<p>剩余 300MB 空闲</p>
+<p><strong>Class C：400B Chunk</strong></p>
+<p>200MB / 300MB</p>
+<p>剩余 100MB 空闲</p>
+<p><strong>总计</strong></p>
+<h1 id="400mb"><strong>400MB</strong></h1>
+<p>仍有约 400MB 已分配页面空间未被 Chunk 使用，但 Class A 已经没有可用 Chunk。</p>
+<p>现在有大量 100B 左右的缓存对象需要写入。</p>
+<p>发生什么？</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>新对象需要 Class A</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>Class A 没有空闲 Chunk</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>尝试从 Class A 的 Slab 中回收 Item</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       +---- 可以回收 ----> 淘汰旧数据，写入新数据</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       +---- 无法满足 ----> 需要获取新的 Slab Page</span></span>
+<span class="line"><span>                                  |</span></span>
+<span class="line"><span>                                  v</span></span>
+<span class="line"><span>                          检查是否有可用内存</span></span>
+<span class="line"><span>                                  |</span></span>
+<span class="line"><span>                      +-----------+-----------+</span></span>
+<span class="line"><span>                      |                       |</span></span>
+<span class="line"><span>                  有可用内存                没有可用内存</span></span>
+<span class="line"><span>                      |                       |</span></span>
+<span class="line"><span>                分配新的 Page          需要淘汰或回收</span></span></code></pre>
+<p>关键就在于：</p>
+<p>Class B 和 Class C 的空闲 Chunk，不能直接拿给 Class A 使用。</p>
+<p>因为它们的尺寸规格不同。</p>
+<p>这就是所谓的 Slab Class 之间的内存不均衡。</p>
+<h3 id="25-memcached-有没有办法解决这个问题"><strong>2.5 Memcached 有没有办法解决这个问题？</strong></h3>
+<p>有。</p>
+<p>这里不能把 Memcached 理解成完全固定、永远不能调整的内存分区。</p>
+<p>Memcached 支持 Slab Reassignment（Slab 页面重新分配）。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Class A：需要更多内存</span></span>
+<span class="line"><span>Class B：大量空闲内存</span></span></code></pre>
+<p>可以把 Class B 的某些 Slab Page 回收，然后重新分配给 Class A。</p>
+<p>大致过程：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Class B</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>选择一个 Slab Page</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>迁移或淘汰其中的 Item</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>释放 Slab Page</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>重新分配给 Class A</span></span></code></pre>
+<p>这里有一个细节：</p>
+<p>一个 Slab Page 里面可能存在大量有效缓存数据，因此重新分配不是简单地修改一个指针就完成了。需要处理页面中的 Item，包括迁移、回收等工作。</p>
+<p>Memcached 还有 Slab Automove 机制，可以根据不同 Class 的内存压力动态调整 Slab Page 的分配。</p>
+<p>因此，准确的结论应该是：</p>
+<p><strong>Memcached 存在 Class 间内存利用率不均衡问题，但可以通过 Slab Reassignment 和 Automove 缓解，而不是完全无法解决。</strong></p>
+<h1 id="三memcached-为什么读取速度快"><strong>三、Memcached 为什么读取速度快？</strong></h1>
+<p>现在进入真正有意思的地方。</p>
+<p>你提到：</p>
+<blockquote>
+<p>这种特殊结构使其在数据定位数组寻址与读写上的速度非常快。</p>
+</blockquote>
+<p>这个说法有一定道理，但需要纠正一个细节：</p>
+<p><strong>Memcached 并不是通过 Key 直接计算数组下标，然后 O(1) 读取 Value。</strong></p>
+<p>它仍然需要 Hash Table。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Key = user:10001</span></span></code></pre>
+<p>首先计算 Hash：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>hash = hash_func("user:10001");</span></span></code></pre>
+<p>然后通过 Hash 定位 Bucket：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>bucket = hash &#x26; hash_table_mask;</span></span></code></pre>
+<p>找到 Bucket 后，再比较链表或者其他冲突处理结构中的 Key。</p>
+<p>所以 Memcached 和 Redis 一样，都需要经过 Hash 查找。</p>
+<p>真正的区别主要在于：</p>
+<ul>
+<li>Memcached 的 Item 采用紧凑的内存组织方式。</li>
+<li>Item 的内存来自对应的 Slab Chunk。</li>
+<li>Chunk 的规格固定，避免了每个对象都进行独立的通用内存分配。</li>
+<li>Memcached 的线程模型可以充分利用多核 CPU。</li>
+</ul>
+<p>我们把整个读取流程拆开。</p>
+<h2 id="31-memcached-的读取过程"><strong>3.1 Memcached 的读取过程</strong></h2>
+<p>假设：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>get user:10001</span></span></code></pre>
+<p>内部可以简化为：</p>
+<p><strong>客户端发送 GET 请求</strong></p>
+<p><strong>网络线程接收请求</strong></p>
+<p><strong>计算 Key 的 Hash 值</strong></p>
+<p><strong>定位 Hash Bucket</strong></p>
+<p><strong>查找 Item，比较 Key</strong></p>
+<p><strong>读取 Value 并返回客户端</strong></p>
+<p>注意：</p>
+<p>Memcached 并不是完全没有指针访问，也不是整个读取过程都是数组下标访问。</p>
+<p>Hash Bucket 到 Item 仍然可能涉及指针跳转。</p>
+<p>但是，Slab 带来的好处是：内存分配和对象管理相对简单，内存布局也比较规整。</p>
+<h2 id="32-chunk-为什么能提高性能"><strong>3.2 Chunk 为什么能提高性能？</strong></h2>
+<p>这里涉及一个非常重要的计算机原理：</p>
+<p><strong>CPU Cache（CPU 缓存）和内存局部性。</strong></p>
+<p>CPU 访问数据时，并不是每次都直接访问物理内存。</p>
+<p>它有多级缓存：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>CPU Core</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +---- L1 Cache</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +---- L2 Cache</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +---- L3 Cache</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +---- Main Memory</span></span></code></pre>
+<p>CPU Cache 的访问速度远高于内存。</p>
+<p>通常 CPU Cache Line 为 64 Bytes（常见 x86 平台）。</p>
+<p>假设一个 Item 的元数据和部分 Key 位于相邻内存位置。</p>
+<p>CPU 读取其中一部分时，可能顺便把周围的数据加载到 Cache Line。</p>
+<p>后续访问这些相邻数据，就有机会直接命中 CPU Cache。</p>
+<p>Slab 的固定规格分配和较为紧凑的 Item 布局，有利于改善内存局部性。</p>
+<p>但这里要注意：</p>
+<p><strong>固定 Chunk 不等于 CPU Cache 一定命中。</strong></p>
+<p>Hash Table 本身可能发生随机访问，Item 也可能分布在不同 Slab Page 中。</p>
+<p>因此，不能简单认为 Memcached 只因为 Slab 就一定比 Redis 有更好的 CPU Cache 命中率。</p>
+<h1 id="四redis-为什么在简单-key-value-读取上可能更慢"><strong>四、Redis 为什么在简单 Key-Value 读取上可能更慢？</strong></h1>
+<p>我们先看 Redis 的内部数据结构。</p>
+<p>Redis 并不是简单地把 Key 和 Value 放到一个数组里面。</p>
+<p>它需要维护一套对象体系。</p>
+<p>以：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>SET user:10001 Tom</span></span></code></pre>
+<p>为例。</p>
+<p>Redis 内部大致涉及以下结构：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Redis DB</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>dict (Hash Table)</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>dictEntry</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +---- key</span></span>
+<span class="line"><span>   |      |</span></span>
+<span class="line"><span>   |      v</span></span>
+<span class="line"><span>   |    RedisObject</span></span>
+<span class="line"><span>   |      |</span></span>
+<span class="line"><span>   |      v</span></span>
+<span class="line"><span>   |    SDS</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +---- value</span></span>
+<span class="line"><span>          |</span></span>
+<span class="line"><span>          v</span></span>
+<span class="line"><span>       RedisObject</span></span>
+<span class="line"><span>          |</span></span>
+<span class="line"><span>          v</span></span>
+<span class="line"><span>         SDS</span></span></code></pre>
+<p>这里需要解释几个核心结构。</p>
+<h2 id="41-redisobject"><strong>4.1 RedisObject</strong></h2>
+<p>Redis 中有一个非常重要的结构：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>typedef struct redisObject {</span></span>
+<span class="line"><span>    unsigned type:4;</span></span>
+<span class="line"><span>    unsigned encoding:4;</span></span>
+<span class="line"><span>    unsigned lru:LRU_BITS;</span></span>
+<span class="line"><span>    int refcount;</span></span>
+<span class="line"><span>    void *ptr;</span></span>
+<span class="line"><span>} robj;</span></span></code></pre>
+<p>这是 Redis 对象体系中的典型结构示意，具体字段会随 Redis 版本变化。</p>
+<p>它包含：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>字段</th><th>作用</th></tr></thead><tbody><tr><td>type</td><td>数据类型</td></tr><tr><td>encoding</td><td>底层编码</td></tr><tr><td>lru</td><td>LRU/LFU 等淘汰相关信息</td></tr><tr><td>refcount</td><td>引用计数</td></tr><tr><td>ptr</td><td>指向底层数据</td></tr></tbody></table>
+<p>为什么 Redis 需要 RedisObject？</p>
+<p>因为 Redis 不只是一个简单的 Key-Value 缓存。</p>
+<p>它支持：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>String</span></span>
+<span class="line"><span>List</span></span>
+<span class="line"><span>Hash</span></span>
+<span class="line"><span>Set</span></span>
+<span class="line"><span>Sorted Set</span></span>
+<span class="line"><span>Stream</span></span></code></pre>
+<p>而且每种数据结构还可能存在不同的底层编码。</p>
+<p>例如：</p>
+<ul>
+<li>List 可以使用 quicklist。</li>
+<li>Hash 可以使用 listpack 或 hashtable。</li>
+<li>Set 可以使用 intset 或 hashtable。</li>
+<li>Sorted Set 可以使用 listpack 或 skiplist + dict。</li>
+</ul>
+<p>Redis 通过统一的对象抽象管理这些数据类型。</p>
+<p>这就带来了额外的元数据和管理成本。</p>
+<p>当然，不是所有 Redis 数据都需要相同数量的内存分配，整数编码、共享对象、紧凑编码等机制都能减少开销。</p>
+<h2 id="42-sdsredis-的字符串结构"><strong>4.2 SDS：Redis 的字符串结构</strong></h2>
+<p>Redis 的字符串并不是简单的 C 字符串。</p>
+<p>它采用 SDS（Simple Dynamic String）。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>struct sdshdr {</span></span>
+<span class="line"><span>    size_t len;</span></span>
+<span class="line"><span>    size_t alloc;</span></span>
+<span class="line"><span>    unsigned char flags;</span></span>
+<span class="line"><span>    char buf[];</span></span>
+<span class="line"><span>};</span></span></code></pre>
+<p>这里是概念化的结构示意，实际 Redis 使用多种不同宽度的 SDS Header。</p>
+<p>为什么不直接使用 C 字符串？</p>
+<p>C 字符串有几个问题：</p>
+<ol>
+<li>需要通过 <code>\0</code> 判断字符串结束。</li>
+<li>获取字符串长度需要遍历，时间复杂度 O(N)。</li>
+<li>字符串修改可能涉及内存重新分配。</li>
+<li>无法直接安全地存储包含 <code>\0</code> 的二进制数据。</li>
+</ol>
+<p>SDS 通过维护长度和分配空间等信息解决这些问题。</p>
+<p>但是也意味着 Redis 字符串存在一定的元数据开销。</p>
+<h2 id="43-redis-的-hash-table"><strong>4.3 Redis 的 Hash Table</strong></h2>
+<p>Redis 的数据库核心结构之一是 Dict。</p>
+<p>可以简化理解为：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>typedef struct dictEntry {</span></span>
+<span class="line"><span>    void *key;</span></span>
+<span class="line"><span>    void *v;</span></span>
+<span class="line"><span>    struct dictEntry *next;</span></span>
+<span class="line"><span>} dictEntry;</span></span></code></pre>
+<p>每个 DictEntry 里面：</p>
+<ul>
+<li>key 指向 Key 对象。</li>
+<li>v 指向 Value 对象。</li>
+<li>next 用于解决 Hash 冲突。</li>
+</ul>
+<p>因此一次读取可能涉及：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Hash Table Bucket</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      v</span></span>
+<span class="line"><span>   dictEntry</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      +---- key 指针</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      +---- value 指针</span></span>
+<span class="line"><span>                 |</span></span>
+<span class="line"><span>                 v</span></span>
+<span class="line"><span>             RedisObject</span></span>
+<span class="line"><span>                 |</span></span>
+<span class="line"><span>                 v</span></span>
+<span class="line"><span>                SDS</span></span></code></pre>
+<p>这意味着可能存在多次指针跳转。</p>
+<p>如果数据没有位于 CPU Cache 中，就可能产生更多的内存访问延迟。</p>
+<p>另外，Redis 还需要考虑：</p>
+<ul>
+<li>字典扩容。</li>
+<li>渐进式 Rehash。</li>
+<li>对象引用计数。</li>
+<li>过期时间管理。</li>
+<li>淘汰策略。</li>
+<li>RDB/AOF 持久化。</li>
+<li>复制与集群相关功能。</li>
+</ul>
+<p>这些都是额外的系统管理成本。</p>
+<p>但是需要强调：这些功能并不意味着每次 GET 都会完整执行一遍。很多功能只在特定条件下发生。</p>
+<p><strong>所以 Redis 在简单字符串读取时，可能比 Memcached 有更多的数据结构和内存管理开销，但不能把 Redis 的性能差距简单归因于 RedisObject 和 SDS。</strong></p>
+<h1 id="五一个更重要的区别memcached-多线程redis-命令执行通常是单线程"><strong>五、一个更重要的区别：Memcached 多线程，Redis 命令执行通常是单线程</strong></h1>
+<p>这部分对理解高并发性能非常重要。</p>
+<p>很多人认为：</p>
+<blockquote>
+<p>Memcached 比 Redis 快，是因为 Memcached 使用多线程，而 Redis 使用单线程。</p>
+</blockquote>
+<p>这个结论有一定道理，但不够完整。</p>
+<p>我们需要理解两者的并发模型。</p>
+<h2 id="51-memcached-的多线程模型"><strong>5.1 Memcached 的多线程模型</strong></h2>
+<p>Memcached 采用多线程架构。</p>
+<p>其典型架构包括：</p>
+<ul>
+<li>Main Thread：负责监听连接、接收新连接。</li>
+<li>Worker Threads：负责处理客户端请求。</li>
+<li>Libevent：用于事件驱动网络处理。</li>
+</ul>
+<p>可以简化为：</p>
+<p><strong>Main Thread</strong></p>
+<p>监听端口、Accept 新连接</p>
+<p><strong>Worker Threads</strong></p>
+<p><strong>Worker 1</strong></p>
+<p>独立事件循环</p>
+<p>处理请求</p>
+<p><strong>Worker 2</strong></p>
+<p>独立事件循环</p>
+<p>处理请求</p>
+<p><strong>Worker 3</strong></p>
+<p>独立事件循环</p>
+<p>处理请求</p>
+<p><strong>共享缓存数据和内存管理结构</strong></p>
+<p>例如，服务器有 16 个 CPU 核心。</p>
+<p>可以配置 Memcached 使用多个 Worker Thread。</p>
+<p>当有大量客户端请求时：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>请求 A ---> Worker 1</span></span>
+<span class="line"><span>请求 B ---> Worker 2</span></span>
+<span class="line"><span>请求 C ---> Worker 3</span></span>
+<span class="line"><span>请求 D ---> Worker 4</span></span>
+<span class="line"><span>...</span></span>
+<span class="line"><span>请求 N ---> Worker 16</span></span></code></pre>
+<p>多个线程可以同时执行缓存操作。</p>
+<p>这意味着 Memcached 能够充分利用多核 CPU。</p>
+<p>当然，Memcached 内部并不是所有操作都没有锁。共享 Hash Table、Item、Slab 等结构需要相应的并发保护，锁竞争也可能成为瓶颈。</p>
+<h2 id="52-redis-的单线程模型"><strong>5.2 Redis 的单线程模型</strong></h2>
+<p>Redis 的经典模型是：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>多个客户端</span></span>
+<span class="line"><span>     |</span></span>
+<span class="line"><span>     v</span></span>
+<span class="line"><span>网络事件循环</span></span>
+<span class="line"><span>     |</span></span>
+<span class="line"><span>     v</span></span>
+<span class="line"><span>接收请求</span></span>
+<span class="line"><span>     |</span></span>
+<span class="line"><span>     v</span></span>
+<span class="line"><span>解析命令</span></span>
+<span class="line"><span>     |</span></span>
+<span class="line"><span>     v</span></span>
+<span class="line"><span>执行命令</span></span>
+<span class="line"><span>     |</span></span>
+<span class="line"><span>     v</span></span>
+<span class="line"><span>返回结果</span></span></code></pre>
+<p>Redis 主要通过 I/O 多路复用实现网络连接管理。</p>
+<p>例如 Linux 下的 epoll：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Client 1 ----\</span></span>
+<span class="line"><span>Client 2 -----\</span></span>
+<span class="line"><span>Client 3 ------> epoll</span></span>
+<span class="line"><span>Client 4 -----/     |</span></span>
+<span class="line"><span>Client 5 ----/      v</span></span>
+<span class="line"><span>                 Redis Event Loop</span></span>
+<span class="line"><span>                       |</span></span>
+<span class="line"><span>                       v</span></span>
+<span class="line"><span>                   执行命令</span></span></code></pre>
+<p>假设同时有 10 万个客户端连接。</p>
+<p>Redis 不需要为每个连接创建一个线程。</p>
+<p>而是通过 epoll 监听大量连接的读写事件。</p>
+<p>当某个连接有数据到达时，Redis 才处理对应的请求。</p>
+<p>这里有一个非常重要的区别：</p>
+<p><strong>I/O 多路复用解决的是大量网络连接的管理问题，不等于命令执行可以并行。</strong></p>
+<p>经典 Redis 命令执行模型中，同一时刻通常只有一个主执行线程在执行命令。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>GET user:10001</span></span>
+<span class="line"><span>GET user:10002</span></span>
+<span class="line"><span>GET user:10003</span></span></code></pre>
+<p>这些命令通常由主线程依次执行。</p>
+<p>因此：</p>
+<ul>
+<li>不需要为普通命令执行设计复杂的多线程同步机制。</li>
+<li>命令执行天然具有串行化特征。</li>
+<li>单条命令执行期间不会被另一条普通命令插入执行。</li>
+<li>但是 CPU 密集型命令可能阻塞其他客户端请求。</li>
+</ul>
+<h3 id="53-redis-6-以后是不是也支持多线程"><strong>5.3 Redis 6 以后是不是也支持多线程？</strong></h3>
+<p>支持。</p>
+<p>Redis 6 引入了 I/O Threads。</p>
+<p>但这里要区分：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>工作内容</th><th>经典 Redis</th><th>Redis 6+</th></tr></thead><tbody><tr><td>网络连接管理</td><td>主线程事件循环</td><td>主线程事件循环</td></tr><tr><td>Socket 读取</td><td>主线程</td><td>可由 I/O 线程分担</td></tr><tr><td>协议解析</td><td>主要由主线程处理</td><td>部分 I/O 工作可并行</td></tr><tr><td>命令执行</td><td>主线程</td><td>仍然主要由主线程</td></tr><tr><td>命令结果写回</td><td>主线程</td><td>可由 I/O 线程分担</td></tr></tbody></table>
+<p>Redis 6 的多线程 I/O 并没有把普通命令执行改造成多线程并行执行。</p>
+<p>所以：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Memcached：</span></span>
+<span class="line"><span>多个 Worker 可以并行处理缓存操作</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Redis：</span></span>
+<span class="line"><span>多个 I/O 线程可以帮助处理网络 I/O</span></span>
+<span class="line"><span>核心命令执行仍然主要由主线程串行完成</span></span></code></pre>
+<p>这也是为什么在纯粹的简单 Key-Value 场景中，Memcached 有机会利用多核 CPU 获得更高的总体吞吐量。</p>
+<p>不过，Redis 也有多种性能优化，例如 Pipeline、I/O Threads、批量操作，以及不同版本中的网络栈优化。</p>
+<p>不能只通过线程数量判断实际性能。</p>
+<h1 id="六为什么-redis-单线程反而有优势"><strong>六、为什么 Redis 单线程反而有优势？</strong></h1>
+<p>这里涉及一个经常在架构师面试中出现的问题：</p>
+<p><strong>既然多线程能提高吞吐量，为什么 Redis 不直接把命令执行也改成多线程？</strong></p>
+<p>因为多线程不是没有成本的。</p>
+<p>假设有一个共享 Hash Table：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>线程 1：GET user:10001</span></span>
+<span class="line"><span>线程 2：SET user:10001 Tom</span></span>
+<span class="line"><span>线程 3：DEL user:10001</span></span></code></pre>
+<p>如果多个线程同时访问、修改共享数据结构，就需要考虑：</p>
+<ol>
+<li>锁竞争。</li>
+<li>数据结构并发安全。</li>
+<li>内存释放时机。</li>
+<li>引用计数并发修改。</li>
+<li>事务执行顺序。</li>
+<li>多命令原子性。</li>
+<li>死锁与锁粒度。</li>
+</ol>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>synchronized (cache) {</span></span>
+<span class="line"><span>    // 查询缓存</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<p>如果所有缓存操作都使用同一把锁，那么多线程虽然存在，但实际还是串行执行。</p>
+<p>如果使用细粒度锁，又会增加实现复杂度。</p>
+<p>Redis 的思路是：</p>
+<p><strong>把核心命令执行串行化，减少共享数据结构的并发控制成本。</strong></p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>MULTI</span></span>
+<span class="line"><span>SET account:1 100</span></span>
+<span class="line"><span>SET account:2 200</span></span>
+<span class="line"><span>EXEC</span></span></code></pre>
+<p>Redis 能够保证事务中的命令按照顺序执行，不会被其他客户端的普通命令插入。</p>
+<p>这里需要强调：</p>
+<p>Redis 的事务不等于关系数据库事务，不提供传统数据库那样的回滚机制。</p>
+<p>但其命令串行执行模型确实使很多原子操作更容易实现。</p>
+<h2 id="61-单线程为什么能够跑得很快"><strong>6.1 单线程为什么能够跑得很快？</strong></h2>
+<p>因为 Redis 的主要工作很多时候不是 CPU 密集型计算，而是：</p>
+<ul>
+<li>Hash 查找。</li>
+<li>内存读取。</li>
+<li>简单数据结构操作。</li>
+<li>网络数据读写。</li>
+</ul>
+<p>这些操作本身比较轻量。</p>
+<p>另外，Redis 避免了普通命令执行过程中大量的线程切换和锁同步。</p>
+<p>但是，如果命令需要处理很大的数据量，例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>KEYS *</span></span>
+<span class="line"><span>SMEMBERS huge_set</span></span>
+<span class="line"><span>SORT huge_list</span></span></code></pre>
+<p>就可能消耗大量 CPU 时间，阻塞其他命令。</p>
+<p>所以 Redis 的单线程既是优势，也是限制。</p>
+<h1 id="七你提到的redis-一致性更好这个说法需要重新理解"><strong>七、你提到的「Redis 一致性更好」，这个说法需要重新理解</strong></h1>
+<p>这句话很容易产生误解。</p>
+<p>Memcached 和 Redis 都是缓存系统。</p>
+<p>Redis 的单线程命令执行确实具有很好的原子性特征，但不能直接说 Redis 的数据一致性就一定比 Memcached 好。</p>
+<p>我们区分三个概念。</p>
+<h3 id="71-命令原子性"><strong>7.1 命令原子性</strong></h3>
+<p>Redis：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>INCR counter</span></span></code></pre>
+<p>这个操作由主线程执行，不会被其他普通命令插入。</p>
+<p>Memcached：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>incr counter 1</span></span></code></pre>
+<p>同样支持原子的计数操作。</p>
+<p>因此，不能说 Memcached 的单条命令不具备原子性。</p>
+<h3 id="72-并发修改一致性"><strong>7.2 并发修改一致性</strong></h3>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>线程 A：读取 value = 100</span></span>
+<span class="line"><span>线程 B：读取 value = 100</span></span>
+<span class="line"><span>线程 A：写入 value = 110</span></span>
+<span class="line"><span>线程 B：写入 value = 120</span></span></code></pre>
+<p>这可能产生更新覆盖问题。</p>
+<p>无论使用 Redis 还是 Memcached，如果业务使用 GET + 修改 + SET 这种多个独立命令实现业务操作，都需要考虑并发竞争。</p>
+<p>Redis 可以使用 Lua、事务或其他原子操作来解决。</p>
+<p>Memcached 可以使用 CAS（Check And Set）机制解决乐观并发更新问题。</p>
+<h3 id="73-分布式数据一致性"><strong>7.3 分布式数据一致性</strong></h3>
+<p>再考虑：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Redis Master</span></span>
+<span class="line"><span>     |</span></span>
+<span class="line"><span>     v</span></span>
+<span class="line"><span>Redis Replica</span></span></code></pre>
+<p>主从复制是异步的常见模式。</p>
+<p>主节点写入成功，不代表所有从节点已经同步。</p>
+<p>Memcached 本身也没有 Redis 那样内置的主从复制、持久化和集群数据复制体系。</p>
+<p>所以如果讨论的是分布式一致性，Redis 也不能简单地被认为是强一致系统。</p>
+<p>我的建议是：面试时不要说「Redis 单线程，所以一致性更好」。</p>
+<p>更准确的说法是：</p>
+<blockquote>
+<p>Redis 通过单线程执行模型，天然简化了单实例内部命令的串行化和原子性实现；Memcached 通过多线程提高并发处理能力，同时使用锁、CAS 等机制处理并发访问。但两者的分布式一致性需要另外分析，不能由单线程或多线程直接推导。</p>
+</blockquote>
+<h1 id="八两者的内存管理机制对比"><strong>八、两者的内存管理机制对比</strong></h1>
+<p>现在把前面的内容放在一起。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>对比维度</th><th>Memcached</th><th>Redis</th></tr></thead><tbody><tr><td>核心内存管理</td><td>Slab Allocator</td><td>jemalloc 等分配器</td></tr><tr><td>内存组织</td><td>Slab Page、Chunk、Item</td><td>RedisObject、SDS、Dict 等</td></tr><tr><td>内存分配</td><td>按 Chunk Class 分配</td><td>根据对象和分配器规格动态分配</td></tr><tr><td>外部碎片</td><td>Slab 机制减少传统外部碎片</td><td>可能出现内存碎片</td></tr><tr><td>内部碎片</td><td>Chunk 尺寸不匹配产生</td><td>分配器尺寸级别及对象结构产生</td></tr><tr><td>数据结构</td><td>主要是简单 Key-Value</td><td>String、Hash、List、Set、ZSet、Stream 等</td></tr><tr><td>网络处理</td><td>多线程事件驱动</td><td>I/O 多路复用，可配置 I/O 多线程</td></tr><tr><td>命令执行</td><td>多 Worker 并行</td><td>主要由主线程串行执行</td></tr><tr><td>并发控制</td><td>需要处理共享数据结构的并发访问</td><td>单实例核心命令执行简化了并发控制</td></tr><tr><td>CAS</td><td>支持</td><td>有 WATCH 等机制，语义不同</td></tr><tr><td>持久化</td><td>不提供 Redis 那样的内置持久化体系</td><td>RDB、AOF</td></tr><tr><td>复制</td><td>无内置 Redis 式复制体系</td><td>主从复制</td></tr><tr><td>复杂数据结构</td><td>不支持 Redis 式复杂结构</td><td>丰富</td></tr></tbody></table>
+<h2 id="81-redis-为什么也会出现内存碎片"><strong>8.1 Redis 为什么也会出现内存碎片？</strong></h2>
+<p>Redis 使用 jemalloc 等内存分配器。</p>
+<p>jemalloc 也不是简单地每次申请多少就分配多少。</p>
+<p>它同样会按照不同的 Size Class 管理内存。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>申请 100B</span></span>
+<span class="line"><span>实际分配 112B</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>申请 200B</span></span>
+<span class="line"><span>实际分配 224B</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>申请 300B</span></span>
+<span class="line"><span>实际分配 320B</span></span></code></pre>
+<p>具体规格取决于分配器版本和配置，这里只是示意。</p>
+<p>Redis 还需要管理：</p>
+<ul>
+<li>RedisObject。</li>
+<li>SDS。</li>
+<li>DictEntry。</li>
+<li>数据结构节点。</li>
+<li>过期字典。</li>
+<li>其他内部元数据。</li>
+</ul>
+<p>因此，一个业务 Value 的实际内存占用，往往远远大于 Value 本身的字节数。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>业务数据：</span></span>
+<span class="line"><span>Key = user:10001</span></span>
+<span class="line"><span>Value = Tom</span></span></code></pre>
+<p>实际内存可能涉及：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>DictEntry</span></span>
+<span class="line"><span>RedisObject(Key)</span></span>
+<span class="line"><span>SDS(Key)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>RedisObject(Value)</span></span>
+<span class="line"><span>SDS(Value)</span></span></code></pre>
+<p>此外还有 Hash Table 的 Bucket、分配器元数据、对齐空间等。</p>
+<p>所以，如果你存储的是几千万条只有几十字节的简单 Key-Value，Redis 的对象管理开销可能相当可观。</p>
+<p>不过需要注意，Redis 的紧凑编码、整数编码以及 jemalloc 的优化也能有效降低这些开销，不能简单地认为每个 Redis Key-Value 都必然产生固定数量的独立 malloc。</p>
+<h1 id="九一个实际业务场景1000-万用户信息缓存"><strong>九、一个实际业务场景：1000 万用户信息缓存</strong></h1>
+<p>假设我们有一个用户系统：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Key:</span></span>
+<span class="line"><span>user:10001</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Value:</span></span>
+<span class="line"><span>{"name":"Tom","age":20}</span></span></code></pre>
+<p>现在有 1000 万用户。</p>
+<p>每个 Value 大约 100B。</p>
+<p>我们暂时忽略 Key、对象元数据、分配器开销，只计算业务数据：</p>
+<p>\[ 10000000 \times 100B \approx 1GB \]</p>
+<p>实际上，整个缓存系统的内存需要远大于 1GB。</p>
+<p>现在考虑两种方案。</p>
+<h2 id="方案-amemcached"><strong>方案 A：Memcached</strong></h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>                    Application</span></span>
+<span class="line"><span>                         |</span></span>
+<span class="line"><span>                         v</span></span>
+<span class="line"><span>                  Memcached Client</span></span>
+<span class="line"><span>                         |</span></span>
+<span class="line"><span>              +----------+----------+</span></span>
+<span class="line"><span>              |          |          |</span></span>
+<span class="line"><span>              v          v          v</span></span>
+<span class="line"><span>            MC-1       MC-2       MC-3</span></span>
+<span class="line"><span>              |          |          |</span></span>
+<span class="line"><span>           Slab       Slab       Slab</span></span>
+<span class="line"><span>           Class      Class      Class</span></span></code></pre>
+<p>优点：</p>
+<ol>
+<li>简单 Key-Value 读写。</li>
+<li>多线程利用多核 CPU。</li>
+<li>Slab 减少通用动态内存分配开销。</li>
+<li>没有 Redis 那样复杂的数据结构体系。</li>
+<li>适合大量简单缓存对象。</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>不同 Slab Class 之间可能出现内存利用不均衡。</li>
+<li>Value 大小跨度大时，内部碎片可能增加。</li>
+<li>不具备 Redis 那样丰富的数据操作能力。</li>
+<li>没有内置的数据持久化和复制体系。</li>
+<li>缓存节点故障后的数据恢复通常需要依赖上游数据库重新加载。</li>
+</ol>
+<h2 id="方案-bredis"><strong>方案 B：Redis</strong></h2>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>                    Application</span></span>
+<span class="line"><span>                         |</span></span>
+<span class="line"><span>                         v</span></span>
+<span class="line"><span>                     Redis Client</span></span>
+<span class="line"><span>                         |</span></span>
+<span class="line"><span>              +----------+----------+</span></span>
+<span class="line"><span>              |          |          |</span></span>
+<span class="line"><span>              v          v          v</span></span>
+<span class="line"><span>           Redis-1   Redis-2    Redis-3</span></span>
+<span class="line"><span>              |          |          |</span></span>
+<span class="line"><span>           Dict       Dict       Dict</span></span>
+<span class="line"><span>           Object     Object     Object</span></span>
+<span class="line"><span>           SDS        SDS        SDS</span></span></code></pre>
+<p>优点：</p>
+<ol>
+<li>丰富的数据结构。</li>
+<li>支持原子操作、Lua 等。</li>
+<li>支持 RDB、AOF。</li>
+<li>支持主从复制。</li>
+<li>支持过期策略和多种淘汰策略。</li>
+<li>适合复杂业务缓存。</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>对象和数据结构管理存在额外开销。</li>
+<li>主线程执行命令可能成为 CPU 瓶颈。</li>
+<li>复杂数据结构可能产生额外的内存和操作成本。</li>
+<li>大量小对象也可能造成较高的内存管理开销。</li>
+</ol>
+<h1 id="十到底什么情况下应该选择-memcached"><strong>十、到底什么情况下应该选择 Memcached？</strong></h1>
+<p>我给你一个实际的架构选型思路。</p>
+<p>更适合 Memcached</p>
+<p><strong>场景一：海量简单 KV 读取</strong></p>
+<ul>
+<li>用户基本信息缓存</li>
+<li>商品简单属性缓存</li>
+<li>页面片段缓存</li>
+<li>大量无复杂操作的临时数据</li>
+</ul>
+<p>更适合 Memcached</p>
+<p><strong>场景二：Value 大小比较稳定</strong></p>
+<ul>
+<li>对象结构相对固定</li>
+<li>Key-Value 大小分布集中</li>
+<li>读取远多于复杂更新</li>
+<li>不依赖复杂数据结构</li>
+</ul>
+<p>更适合 Redis</p>
+<p><strong>场景三：需要原子操作</strong></p>
+<ul>
+<li>秒杀库存</li>
+<li>计数器</li>
+<li>限流器</li>
+<li>分布式锁</li>
+<li>排行榜</li>
+</ul>
+<p>更适合 Redis</p>
+<p><strong>场景四：需要复杂数据结构</strong></p>
+<ul>
+<li>用户关注关系</li>
+<li>粉丝集合</li>
+<li>消息队列</li>
+<li>延迟任务</li>
+<li>实时排行榜</li>
+</ul>
+<p>还有一点值得注意：如果业务要求缓存节点故障后能够通过持久化恢复数据，Redis 的 RDB/AOF 和复制能力也会是重要的选型因素。</p>
+<h1 id="十一再深入一层如果让我从架构师角度做性能选型"><strong>十一、再深入一层：如果让我从架构师角度做性能选型</strong></h1>
+<p>假设现在公司有一个业务：</p>
+<ul>
+<li>5000 万用户。</li>
+<li>每个用户有一个简单的用户信息缓存。</li>
+<li>Value 大小基本在 100B～200B。</li>
+<li>读 QPS：100 万。</li>
+<li>写 QPS：5 万。</li>
+<li>读写都是简单 GET、SET。</li>
+<li>不需要 List、Set、Hash 等复杂数据结构。</li>
+</ul>
+<p>我会考虑 Memcached。</p>
+<p>但是不会仅凭理论就直接决定。</p>
+<p>我会做以下几个测试：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>测试维度</th><th>测试目的</th></tr></thead><tbody><tr><td>GET 吞吐量</td><td>比较纯读取能力</td></tr><tr><td>SET 吞吐量</td><td>比较写入能力</td></tr><tr><td>P99 延迟</td><td>比较尾延迟</td></tr><tr><td>CPU 利用率</td><td>比较多核利用能力</td></tr><tr><td>RSS 内存</td><td>比较真实内存占用</td></tr><tr><td>内存碎片</td><td>比较内存利用率</td></tr><tr><td>不同 Value 大小</td><td>比较 Slab Class 分布</td></tr><tr><td>高并发连接</td><td>比较网络线程模型</td></tr><tr><td>节点故障</td><td>比较数据恢复能力</td></tr></tbody></table>
+<p>特别需要测试不同 Value 大小的分布：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>测试 A：</span></span>
+<span class="line"><span>90% 的 Value = 100B</span></span>
+<span class="line"><span>10% 的 Value = 120B</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>测试 B：</span></span>
+<span class="line"><span>Value 从 100B 到 10KB 随机分布</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>测试 C：</span></span>
+<span class="line"><span>Value 从 100B 到 1MB 随机分布</span></span></code></pre>
+<p>这三种场景下，Memcached 的 Slab 内存利用情况可能差异很大。</p>
+<p>另外还要测试 Memcached 的 Slab Automove、Chunk 增长因子、最大 Item 大小，以及 Redis 的 jemalloc 碎片率。</p>
+<p>最终看的是：</p>
+<p>\[ \text{实际性能} = f(\text{数据分布},\text{并发模型},\text{内存布局},\text{网络},\text{CPU}) \]</p>
+<p>而不是简单比较两个产品的理论性能。</p>
+<h1 id="十二最后总结真正应该记住的几个原理"><strong>十二、最后总结：真正应该记住的几个原理</strong></h1>
+<p>我把整个问题浓缩成五个知识点，这几个知识点也是面试时最值得展开的地方。</p>
+<p><strong>1. Memcached 为什么适合简单 KV？</strong></p>
+<p>Slab Allocator 将内存划分为不同规格的 Slab Class，每个 Slab Page 再划分为固定大小的 Chunk。降低了通用动态内存分配的复杂度，同时采用多线程处理请求，能够充分利用多核 CPU。</p>
+<p><strong>2. 为什么 Memcached 会出现有空闲内存却无法存储？</strong></p>
+<p>因为不同 Slab Class 的 Chunk 不能直接混用。某个 Class 没有可用 Chunk 时，其他 Class 的空闲 Chunk 不一定能满足它的分配需求。这是 Class 间内存利用不均衡问题，可以通过 Slab Reassignment 缓解。</p>
+<p><strong>3. Redis 为什么在简单 KV 上可能有额外开销？</strong></p>
+<p>Redis 使用统一的对象抽象和丰富的数据结构，涉及 Dict、RedisObject、SDS 等结构，同时需要进行对象管理、引用计数和内存分配。对于纯简单 KV，这些能力可能带来不必要的额外开销。</p>
+<p><strong>4. Memcached 为什么能够获得更高吞吐量？</strong></p>
+<p>其多 Worker 并发模型可以利用多核 CPU，Slab 机制也能降低一部分内存分配开销。但最终性能取决于具体数据分布、并发程度、网络和硬件，不能认为 Memcached 在所有 KV 场景都比 Redis 快。</p>
+<p><strong>5. Redis 单线程为什么仍然有价值？</strong></p>
+<p>它简化了单实例核心数据结构的并发控制，命令执行天然串行化，容易实现原子操作。但是单线程也可能在 CPU 密集型命令下成为性能瓶颈。</p>
+<h2 id="十三我建议你继续研究的三个底层问题"><strong>十三、我建议你继续研究的三个底层问题</strong></h2>
+<p>结合 Java 后端和架构师的知识体系，我认为接下来有三个问题特别值得深入，它们之间还有很强的关联：</p>
+<ol>
+<li><strong>Slab Allocator 与 jemalloc 到底有什么区别？</strong> 为什么 Redis 也使用内存分配器的 Size Class，却没有完全采用 Memcached 的 Slab 管理模式？</li>
+<li><strong>CPU Cache Line、内存局部性、伪共享（False Sharing）与锁竞争</strong>：为什么内存布局会直接影响高并发缓存系统的 QPS？这部分可以深入到 CPU 缓存一致性协议和 CAS。</li>
+<li><strong>Redis 与 Memcached 的多线程性能对比</strong>：如果 Redis 也采用多线程执行命令，理论上是否就能超过 Memcached？为什么 Redis 选择了现在的架构？</li>
+</ol>
+<p>我尤其建议研究第 2 个问题。它能把你之前学习的 Java 并发、CPU 缓存、内存屏障、锁竞争和高并发架构真正串联起来。</p>
+<p>这三个问题其实可以串成一条完整的技术知识链：</p>
+<p><strong>内存分配器 → 内存布局 → CPU Cache → 多线程并发 → 锁竞争 → 缓存系统吞吐量。</strong></p>
+<p>如果把这条链路真正理解了，你就不仅能解释 Memcached 为什么快，还能理解 Redis 为什么采用单线程命令执行、为什么 Netty 要使用 EventLoop、为什么 Disruptor 要设计 RingBuffer，以及为什么高并发系统经常需要减少锁和对象分配。</p>
+<p>我按照三个专题讲解，并尽量从底层原理过渡到 Java 实际开发。</p>
+<h1 id="专题一slab-allocator-与-jemalloc-到底有什么区别"><strong>专题一：Slab Allocator 与 jemalloc 到底有什么区别？</strong></h1>
+<p>这是理解 Memcached 和 Redis 内存管理的基础。</p>
+<h2 id="11-首先理解为什么需要内存分配器"><strong>1.1 首先理解：为什么需要内存分配器？</strong></h2>
+<p>假设一个缓存系统需要保存 1000 万条数据。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>user:10001 -> Tom</span></span>
+<span class="line"><span>user:10002 -> Jack</span></span>
+<span class="line"><span>user:10003 -> Alice</span></span>
+<span class="line"><span>...</span></span></code></pre>
+<p>每条数据的大小可能不同。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>对象 A：100B</span></span>
+<span class="line"><span>对象 B：120B</span></span>
+<span class="line"><span>对象 C：150B</span></span>
+<span class="line"><span>对象 D：300B</span></span>
+<span class="line"><span>对象 E：1024B</span></span></code></pre>
+<p>如果每次申请内存都直接向操作系统申请，会产生非常大的开销。</p>
+<p>因为操作系统的内存管理涉及虚拟内存、页表、物理页等机制。</p>
+<p>所以通常不会每次 <code>malloc()</code> 都直接向操作系统申请内存。</p>
+<p>而是：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>应用程序</span></span>
+<span class="line"><span>    |</span></span>
+<span class="line"><span>    v</span></span>
+<span class="line"><span>malloc / free</span></span>
+<span class="line"><span>    |</span></span>
+<span class="line"><span>    v</span></span>
+<span class="line"><span>用户态内存分配器</span></span>
+<span class="line"><span>    |</span></span>
+<span class="line"><span>    v</span></span>
+<span class="line"><span>预先管理的内存区域</span></span>
+<span class="line"><span>    |</span></span>
+<span class="line"><span>    v</span></span>
+<span class="line"><span>必要时向操作系统申请更多内存</span></span></code></pre>
+<p>这里的内存分配器，就是我们需要理解的东西。</p>
+<p>它负责：</p>
+<ul>
+<li>内存申请。</li>
+<li>内存释放。</li>
+<li>内存复用。</li>
+<li>内存碎片管理。</li>
+<li>不同规格对象的分配。</li>
+<li>多线程分配时的并发管理。</li>
+</ul>
+<p>常见的内存分配器包括：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>分配器</th><th>典型使用场景</th></tr></thead><tbody><tr><td>glibc malloc</td><td>Linux C/C++ 程序</td></tr><tr><td>jemalloc</td><td>Redis 常见构建配置、其他高性能服务</td></tr><tr><td>tcmalloc</td><td>Google 生态及其他高性能系统</td></tr><tr><td>mimalloc</td><td>Microsoft 开源内存分配器</td></tr><tr><td>Slab Allocator</td><td>Memcached 的对象内存管理机制</td></tr></tbody></table>
+<p>注意：Slab Allocator 与 jemalloc 并不是完全同一层面的概念。Slab 是一种内存管理思想和机制，jemalloc 是一个完整的通用内存分配器，内部也采用 Size Class、Slab 等类似技术。</p>
+<h2 id="12-slab-allocator提前把内存分成不同规格"><strong>1.2 Slab Allocator：提前把内存分成不同规格</strong></h2>
+<p>假设我们给 Memcached 分配 1GB 内存。</p>
+<p>它不会将 1GB 切成 1000 万个完全不同大小的区域。</p>
+<p>而是按照对象大小划分不同的 Class。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Class 1：96B</span></span>
+<span class="line"><span>Class 2：120B</span></span>
+<span class="line"><span>Class 3：150B</span></span>
+<span class="line"><span>Class 4：187B</span></span>
+<span class="line"><span>Class 5：234B</span></span>
+<span class="line"><span>Class 6：292B</span></span>
+<span class="line"><span>Class 7：365B</span></span></code></pre>
+<p>每个 Class 有自己的 Slab Page。</p>
+<p>一个 Page 又被分成多个相同大小的 Chunk。</p>
+<p><a href="https://images.openai.com/static-rsc-4/zfQ5cX3AqQQGu2UG9j65q64BRUXFcrmunZowto7AL-9Zy2Ix25CggbD7ChJCXnPtQAQ-qIRdty_jISQsXrme3HiUS6aRxuWxeK309xbvKU4sAyACjreWMeQ-PhGcpHHwiWWh7RvEgcQXGwv28XboejKWuPyiVIy5eR6v2whxQWs?purpose=inline">Journey to the centre of memcached | by Skyscanner Engineering | Medium</a></p>
+<p><a href="https://medium.com/%40SkyscannerEng/journey-to-the-centre-of-memcached-b239076e678a?utm_source=chatgpt.com">medium.com</a></p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Class 1</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  +--- Slab Page 1</span></span>
+<span class="line"><span>  |       |</span></span>
+<span class="line"><span>  |       +--- Chunk 1</span></span>
+<span class="line"><span>  |       +--- Chunk 2</span></span>
+<span class="line"><span>  |       +--- Chunk 3</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  +--- Slab Page 2</span></span>
+<span class="line"><span>          |</span></span>
+<span class="line"><span>          +--- Chunk 1</span></span>
+<span class="line"><span>          +--- Chunk 2</span></span>
+<span class="line"><span>          +--- Chunk 3</span></span></code></pre>
+<p>当来了一个 110B 的对象：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>110B</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  v</span></span>
+<span class="line"><span>寻找最小可用 Chunk</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  v</span></span>
+<span class="line"><span>120B Chunk</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  v</span></span>
+<span class="line"><span>分配</span></span></code></pre>
+<p>它不会申请 110B，而是直接使用 120B 的 Chunk。</p>
+<p>优点：</p>
+<ol>
+<li>分配速度快。</li>
+<li>不需要每次寻找任意大小的连续内存。</li>
+<li>减少通用 malloc/free 的管理开销。</li>
+<li>同一个 Class 的 Chunk 大小一致，管理简单。</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>对象大小不匹配会浪费空间。</li>
+<li>不同 Class 之间可能出现内存分布不均衡。</li>
+<li>对象大小跨度特别大时，内存利用率可能降低。</li>
+</ol>
+<p>这里你需要记住一个概念：</p>
+<p><strong>Slab 通过牺牲一部分空间利用率，换取更简单、更快速、更可预测的对象内存分配。</strong></p>
+<h2 id="13-jemalloc它为什么不只是简单的-slab"><strong>1.3 jemalloc：它为什么不只是简单的 Slab？</strong></h2>
+<p>Redis 常见的内存分配器是 jemalloc。</p>
+<p>jemalloc 也是按照不同大小管理内存，但它的管理体系更加完整。</p>
+<p>可以简化为：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>jemalloc</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +--- Small Allocation</span></span>
+<span class="line"><span>   |       |</span></span>
+<span class="line"><span>   |       +--- Size Class</span></span>
+<span class="line"><span>   |       +--- Slab</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +--- Large Allocation</span></span>
+<span class="line"><span>   |       |</span></span>
+<span class="line"><span>   |       +--- Extent</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +--- Huge Allocation</span></span>
+<span class="line"><span>           |</span></span>
+<span class="line"><span>           +--- 独立的大块内存管理</span></span></code></pre>
+<p>这里涉及几个重要概念。</p>
+<h3 id="a-size-class"><strong>A. Size Class</strong></h3>
+<p>jemalloc 会把不同大小的内存申请映射到不同规格。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>申请 100B</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  v</span></span>
+<span class="line"><span>分配 112B</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>申请 200B</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  v</span></span>
+<span class="line"><span>分配 224B</span></span></code></pre>
+<p>具体尺寸依版本、架构和配置而定。</p>
+<p>这和 Memcached 的 Chunk Class 思想类似。</p>
+<h3 id="b-arena"><strong>B. Arena</strong></h3>
+<p>这是 jemalloc 一个非常重要的概念。</p>
+<p>Arena 可以理解为一套相对独立的内存管理区域。</p>
+<p>为什么需要 Arena？</p>
+<p>假设 32 个线程同时申请内存：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread 1 ----\</span></span>
+<span class="line"><span>Thread 2 -----\</span></span>
+<span class="line"><span>Thread 3 ------> 同一个全局内存分配锁</span></span>
+<span class="line"><span>Thread 4 -----/</span></span>
+<span class="line"><span>...</span></span>
+<span class="line"><span>Thread 32 ---/</span></span></code></pre>
+<p>如果所有线程都访问同一个全局内存管理结构，就容易出现锁竞争。</p>
+<p>jemalloc 使用多个 Arena 来降低这种竞争。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>                  jemalloc</span></span>
+<span class="line"><span>                     |</span></span>
+<span class="line"><span>       +-------------+-------------+</span></span>
+<span class="line"><span>       |             |             |</span></span>
+<span class="line"><span>       v             v             v</span></span>
+<span class="line"><span>    Arena 1       Arena 2       Arena 3</span></span>
+<span class="line"><span>       |             |             |</span></span>
+<span class="line"><span>    Thread 1      Thread 2      Thread 3</span></span></code></pre>
+<p>实际线程和 Arena 的关联不是简单的一对一，还可能受线程缓存、配置和绑定策略影响。</p>
+<p>核心思想：</p>
+<p><strong>把一个巨大的共享内存管理结构拆成多个相对独立的管理区域，减少并发分配时的锁竞争。</strong></p>
+<h3 id="c-thread-cache--tcache"><strong>C. Thread Cache / TCache</strong></h3>
+<p>这是 jemalloc 提升多线程分配性能的重要机制。</p>
+<p>假设线程 A 需要申请 64B 内存。</p>
+<p>如果每次都去 Arena 中申请：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread A</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>Arena</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>查找可用内存</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>分配</span></span></code></pre>
+<p>就可能涉及锁和共享数据结构访问。</p>
+<p>而使用线程本地缓存后：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread A</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>TCache</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +--- 有空闲 64B 对象？</span></span>
+<span class="line"><span>             |</span></span>
+<span class="line"><span>         +--- 有：直接分配</span></span>
+<span class="line"><span>         |</span></span>
+<span class="line"><span>         +--- 无：向 Arena 获取一批</span></span></code></pre>
+<p>这就是批量获取、局部复用的思想。</p>
+<p>线程可以优先使用自己缓存的空闲对象，降低访问共享分配器的频率。</p>
+<p>注意，TCache 不是无限增长的，它有容量限制，也需要处理缓存回收和线程退出等问题。</p>
+<h2 id="14-两者的本质区别"><strong>1.4 两者的本质区别</strong></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>对比</th><th>Memcached Slab</th><th>jemalloc</th></tr></thead><tbody><tr><td>定位</td><td>缓存 Item 内存管理</td><td>通用动态内存分配器</td></tr><tr><td>内存规格</td><td>Slab Class</td><td>Size Class</td></tr><tr><td>内存组织</td><td>Page / Chunk</td><td>Arena / Slab / Extent 等</td></tr><tr><td>多线程优化</td><td>结合 Memcached 的 Worker 和锁机制</td><td>Arena、TCache 等</td></tr><tr><td>小对象分配</td><td>按固定 Chunk</td><td>按 Size Class</td></tr><tr><td>大对象</td><td>受 Item 和 Class 管理限制</td><td>有独立的大块分配路径</td></tr><tr><td>内存复用</td><td>Slab Page、Chunk 复用</td><td>多层缓存和 extent 管理</td></tr><tr><td>适用范围</td><td>Memcached 缓存对象</td><td>通用 C/C++ 动态内存</td></tr></tbody></table>
+<h3 id="这里有一个容易忽略的问题"><strong>这里有一个容易忽略的问题</strong></h3>
+<p>既然 jemalloc 也使用 Size Class 和 Slab，为什么 Redis 不直接采用 Memcached 的 Slab 方案？</p>
+<p>实际上，Redis 使用 jemalloc 时，已经在底层使用了类似的分级分配思想。</p>
+<p>区别在于：</p>
+<ul>
+<li>Memcached 的 Slab 直接服务于缓存 Item。</li>
+<li>jemalloc 是通用分配器，需要服务 Redis 各种大小、各种生命周期的对象。</li>
+<li>Redis 的数据结构和对象可能不断变化，需要更加灵活的内存分配。</li>
+<li>Redis 需要处理对象释放、字典扩容、编码转换等多种场景。</li>
+</ul>
+<p>因此不是「Redis 没有 Slab」，而是两者在不同层次上管理内存。</p>
+<h1 id="专题二cpu-cache-line内存局部性伪共享和锁竞争"><strong>专题二：CPU Cache Line、内存局部性、伪共享和锁竞争</strong></h1>
+<p>这是我认为最值得深入的部分。</p>
+<p>它可以解释为什么两个算法时间复杂度都是 O(1)，实际性能却可能相差很大。</p>
+<h2 id="21-cpu-为什么需要-cache"><strong>2.1 CPU 为什么需要 Cache？</strong></h2>
+<p>我们先从 CPU 访问内存讲起。</p>
+<p>CPU 的执行速度非常快，但是主内存的访问延迟相对较高。</p>
+<p>如果 CPU 每次读取数据都必须等待主内存，那么大量时间都会浪费在等待上。</p>
+<p>于是 CPU 引入了多级缓存：</p>
+<p><a href="https://images.openai.com/static-rsc-4/AIxXqKrLT4M6ZOO3UzxNWqQluMLPT6TLnouV7DwvLBOt0Gzg8URKwVN7WhL8kNoIRXirGBGMM9J94toU92N_2XyQ94pl-AGyiAuxnb8VNaf2R_72-AGibVSh3TOFUmJZdoCGRnViKvRs5M-areohRn70Re6x99LhKxGEpzotP_w?purpose=inline">Medium</a></p>
+<p><a href="https://tonylixu.medium.com/operating-system-hierarchy-of-memory-81dfae60f145?utm_source=chatgpt.com">tonylixu.medium.com</a></p>
+<p>典型结构：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>CPU Core 0</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  +--- L1 Cache</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  +--- L2 Cache</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>CPU Core 1</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  +--- L1 Cache</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  +--- L2 Cache</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    L3 Cache</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>   Main Memory</span></span></code></pre>
+<p>一般来说：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>存储层次</th><th>特点</th></tr></thead><tbody><tr><td>L1 Cache</td><td>最快，容量最小，通常每个核心独立</td></tr><tr><td>L2 Cache</td><td>容量更大，通常每个核心独立</td></tr><tr><td>L3 Cache</td><td>通常多个核心共享</td></tr><tr><td>主内存</td><td>容量大，访问延迟高</td></tr></tbody></table>
+<p>具体结构依 CPU 型号而不同。</p>
+<p>这里要记住：</p>
+<p><strong>CPU 访问一个内存地址时，通常不是只读取这个地址，而是以 Cache Line 为单位加载数据。</strong></p>
+<p>在常见 x86 服务器上，Cache Line 通常为 64B。</p>
+<h2 id="22-什么是-cache-line"><strong>2.2 什么是 Cache Line？</strong></h2>
+<p>假设内存中有这样一段数据：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>地址 0x1000</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>+------+------+------+------+------+</span></span>
+<span class="line"><span>|  A   |  B   |  C   |  D   |  E   |</span></span>
+<span class="line"><span>+------+------+------+------+------+</span></span>
+<span class="line"><span>       一个 Cache Line（示意）</span></span></code></pre>
+<p>假设 CPU 读取变量 A。</p>
+<p>即使只需要 A，也可能把 A 所在的整个 Cache Line 加载进 CPU Cache。</p>
+<p>如果之后访问 B、C、D，这些数据已经在 Cache Line 中，就可能直接命中缓存。</p>
+<p>这就是空间局部性（Spatial Locality）。</p>
+<p>还有时间局部性（Temporal Locality）：</p>
+<p>如果刚刚访问过某个变量，短时间内再次访问它，那么它很可能仍然在 Cache 中。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>for (int i = 0; i &#x3C; 1000000; i++) {</span></span>
+<span class="line"><span>    sum += array[i];</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<p>数组连续存储。</p>
+<p>CPU 访问：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>array[0]</span></span>
+<span class="line"><span>array[1]</span></span>
+<span class="line"><span>array[2]</span></span>
+<span class="line"><span>array[3]</span></span>
+<span class="line"><span>...</span></span></code></pre>
+<p>这种访问模式非常友好。</p>
+<p>但是：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>for (int i = 0; i &#x3C; 1000000; i++) {</span></span>
+<span class="line"><span>    sum += linkedList.get(i);</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<p>如果底层是链表，访问每个元素都需要沿着指针跳转。</p>
+<p>内存地址可能分布在不同区域。</p>
+<p>CPU 预取器很难像处理连续数组一样有效预取数据。</p>
+<p>这就是为什么：</p>
+<p><strong>相同的 O(N) 算法，数组往往比链表快很多。</strong></p>
+<p>这也是为什么 Redis、Memcached、Netty、Disruptor 等高性能系统都非常重视内存布局。</p>
+<h2 id="23-为什么指针跳转会影响性能"><strong>2.3 为什么指针跳转会影响性能？</strong></h2>
+<p>来看两个数据结构。</p>
+<p>数组：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Array</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>+------+------+------+------+</span></span>
+<span class="line"><span>|  A   |  B   |  C   |  D   |</span></span>
+<span class="line"><span>+------+------+------+------+</span></span>
+<span class="line"><span>  0      1      2      3</span></span></code></pre>
+<p>链表：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Node A ----> Node B ----> Node C ----> Node D</span></span></code></pre>
+<p>假设每个 Node 分布在不同的内存区域：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Node A：0x1000</span></span>
+<span class="line"><span>Node B：0x8000</span></span>
+<span class="line"><span>Node C：0x3000</span></span>
+<span class="line"><span>Node D：0x9000</span></span></code></pre>
+<p>读取 Node A 后，CPU 不一定能够提前知道下一个 Node 在哪里。</p>
+<p>所以：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>数组：</span></span>
+<span class="line"><span>连续内存访问</span></span>
+<span class="line"><span>Cache Line 利用率高</span></span>
+<span class="line"><span>CPU 预取效果好</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>链表：</span></span>
+<span class="line"><span>指针跳转</span></span>
+<span class="line"><span>可能发生多次 Cache Miss</span></span>
+<span class="line"><span>内存访问延迟更高</span></span></code></pre>
+<p>这也是为什么一些高性能系统宁愿使用稍微复杂的数组结构，也不愿意使用大量零散的小对象。</p>
+<p>当然，Hash Table 也有随机访问的特点，因此 Redis 和 Memcached 都不可能完全消除 Cache Miss。</p>
+<h2 id="24-什么是伪共享false-sharing"><strong>2.4 什么是伪共享（False Sharing）？</strong></h2>
+<p>这是多线程性能优化中非常重要的一个知识点。</p>
+<p>先看一段 Java 代码：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>public class Counter {</span></span>
+<span class="line"><span>    volatile long count1 = 0;</span></span>
+<span class="line"><span>    volatile long count2 = 0;</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<p>假设：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread 1：不断修改 count1</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Thread 2：不断修改 count2</span></span></code></pre>
+<p>你可能认为：</p>
+<p>两个线程操作的是不同变量，应该不会互相影响。</p>
+<p>但实际上可能存在问题。</p>
+<p>假设：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Cache Line（64B）</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>+------------------+------------------+</span></span>
+<span class="line"><span>| count1           | count2           |</span></span>
+<span class="line"><span>+------------------+------------------+</span></span></code></pre>
+<p>两个变量恰好位于同一个 Cache Line。</p>
+<p>现在：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>CPU Core 1 修改 count1</span></span>
+<span class="line"><span>CPU Core 2 修改 count2</span></span></code></pre>
+<p>虽然两个线程修改的是不同变量，但是它们修改的是同一条 Cache Line。</p>
+<p>CPU 为了保证多核缓存一致性，需要协调 Cache Line 的所有权。</p>
+<p>于是发生：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Core 1 修改 count1</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>Cache Line 状态发生变化</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>Core 2 的对应 Cache Line 失效</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>Core 2 修改 count2</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>Core 1 的 Cache Line 又失效</span></span></code></pre>
+<p>两个核心不断争夺 Cache Line 的所有权。</p>
+<p>这就是伪共享。</p>
+<p><a href="https://images.openai.com/static-rsc-4/bweMr48SUCkcfoDZ2iembv4nU652h0cXKYS13UIG6nDyju3Mbaez9WZR5QZImbjAd17-3dcPGztOvtDWY3mEGg5UOEgrmUT4W6qxeS5r2031jgMvXLF_1sQ-HnY1U0lIGssHi8QceLeV_xuT46ec3ciHuZqoub7unpkcjXNVFL4?purpose=inline">2.5 CPU 是如何执行任务的？ | 小林coding | Java面试学习</a></p>
+<p><a href="https://xiaolincoding.com/os/1_hardware/how_cpu_deal_task.html?utm_source=chatgpt.com">xiaolincoding.com</a></p>
+<p>为什么叫伪共享？</p>
+<p>因为从程序逻辑上看：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>count1 和 count2 完全独立</span></span></code></pre>
+<p>但从 CPU 缓存一致性机制看：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>它们共享同一个 Cache Line</span></span></code></pre>
+<p>于是产生了不必要的缓存一致性流量。</p>
+<h3 id="25-java-如何解决伪共享"><strong>2.5 Java 如何解决伪共享？</strong></h3>
+<p>一种方式是填充字段，让不同线程使用的变量尽量位于不同 Cache Line。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>public class PaddedCounter {</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    volatile long count1;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    // 填充字段，避免 count1 和 count2 过于靠近</span></span>
+<span class="line"><span>    long p1, p2, p3, p4, p5, p6, p7;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    volatile long count2;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    // 其他填充字段</span></span>
+<span class="line"><span>    long p8, p9, p10, p11, p12, p13, p14;</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<p>这是一种概念性示例，不能保证 Java 对象字段的最终物理布局一定符合预期。</p>
+<p>Java 中更专业的方式包括：</p>
+<ul>
+<li><code>@Contended</code>：JVM 支持的字段填充机制。</li>
+<li>Disruptor 的 Padding 思想。</li>
+<li>JMH 基准测试验证。</li>
+</ul>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>import jdk.internal.vm.annotation.Contended;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>public class Counter {</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    @Contended</span></span>
+<span class="line"><span>    volatile long count1;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    @Contended</span></span>
+<span class="line"><span>    volatile long count2;</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<p>注意：</p>
+<p><code>@Contended</code> 属于内部 API，在部分 JDK 环境下需要额外的编译和 JVM 参数，例如 <code>-XX:-RestrictContended</code>，具体还取决于 JDK 版本和模块访问限制。</p>
+<h3 id="26-伪共享和-volatile-有什么关系"><strong>2.6 伪共享和 volatile 有什么关系？</strong></h3>
+<p>这里联系一下你之前研究的 Java 内存模型。</p>
+<p><code>volatile</code> 保证可见性和一定的有序性语义。</p>
+<p>但是它并不意味着每次读写都直接访问主内存。</p>
+<p>CPU 仍然可以使用 Cache。</p>
+<p>为了保证多个核心观察到一致的结果，CPU 需要通过缓存一致性协议协调缓存行状态。</p>
+<p>常见 x86 处理器使用 MESI 或其变体。</p>
+<p>MESI 包括：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>状态</th><th>含义</th></tr></thead><tbody><tr><td>M</td><td>Modified，已修改</td></tr><tr><td>E</td><td>Exclusive，独占</td></tr><tr><td>S</td><td>Shared，共享</td></tr><tr><td>I</td><td>Invalid，无效</td></tr></tbody></table>
+<p>当一个核心需要修改某个 Cache Line 时，通常需要获得该缓存行的独占或修改权限，并使其他核心中的副本失效。</p>
+<p>这就是伪共享背后的硬件原因。</p>
+<p>注意：MESI 是理解原理的模型，现代 CPU 的具体协议可能更复杂。</p>
+<h2 id="27-什么是锁竞争"><strong>2.7 什么是锁竞争？</strong></h2>
+<p>再看一个经典问题。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>public class Counter {</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    private long count = 0;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    public synchronized void increment() {</span></span>
+<span class="line"><span>        count++;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<p>假设有 100 个线程同时执行：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>counter.increment();</span></span></code></pre>
+<p>会发生什么？</p>
+<p>因为所有线程都要获取同一把锁：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread 1 ----\</span></span>
+<span class="line"><span>Thread 2 -----\</span></span>
+<span class="line"><span>Thread 3 ------> synchronized lock</span></span>
+<span class="line"><span>Thread 4 -----/</span></span>
+<span class="line"><span>...</span></span>
+<span class="line"><span>Thread 100 ---/</span></span></code></pre>
+<p>同一时刻只有一个线程能够进入临界区。</p>
+<p>其他线程需要等待。</p>
+<p>这就是锁竞争。</p>
+<p>锁竞争会带来：</p>
+<ol>
+<li>线程阻塞和唤醒。</li>
+<li>上下文切换。</li>
+<li>CPU 缓存行在核心间迁移。</li>
+<li>锁状态维护成本。</li>
+<li>临界区串行化。</li>
+</ol>
+<p>其中有一个容易忽略的因素：</p>
+<p>即使没有发生线程阻塞，多个 CPU 核心对同一锁变量执行 CAS，也可能造成严重的 Cache Line 竞争。</p>
+<p>因此，高并发场景下，锁的成本不只是上下文切换。</p>
+<h3 id="28-如何解决锁竞争"><strong>2.8 如何解决锁竞争？</strong></h3>
+<p>常见有四种思路。</p>
+<p><strong>方案一：锁分段</strong></p>
+<p>不要所有线程共用一把锁。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>原来：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>所有请求 ---> Lock 1</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>优化后：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>请求 ---> Lock 1</span></span>
+<span class="line"><span>请求 ---> Lock 2</span></span>
+<span class="line"><span>请求 ---> Lock 3</span></span>
+<span class="line"><span>请求 ---> Lock 4</span></span></code></pre>
+<p>例如 ConcurrentHashMap 的分段思想，以及基于 Bucket 的锁设计。</p>
+<p>注意，JDK 8 ConcurrentHashMap 已经不再采用传统 Segment 数组作为核心结构，而是通过 CAS、synchronized 等机制实现并发控制。</p>
+<p><strong>方案二：线程本地化</strong></p>
+<p>每个线程维护自己的计数器。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>ThreadLocal&#x3C;Long> counter;</span></span></code></pre>
+<p>这样减少了共享变量的竞争。</p>
+<p>缺点是需要合并各线程的数据。</p>
+<p><strong>方案三：批量处理</strong></p>
+<p>不要每次请求都操作共享结构。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>原来：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>请求 1 -> 更新共享计数器</span></span>
+<span class="line"><span>请求 2 -> 更新共享计数器</span></span>
+<span class="line"><span>请求 3 -> 更新共享计数器</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>优化：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>线程本地累计 1000 次</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>一次性更新共享计数器</span></span></code></pre>
+<p><strong>方案四：无锁算法</strong></p>
+<p>使用 CAS、原子变量、环形队列等减少显式锁竞争。</p>
+<p>但注意：</p>
+<p>无锁不代表没有竞争。CAS 本身也可能产生缓存行争夺。</p>
+<h1 id="专题三如果-redis-也采用多线程执行命令能不能超过-memcached"><strong>专题三：如果 Redis 也采用多线程执行命令，能不能超过 Memcached？</strong></h1>
+<p>这是三个专题中最有架构价值的问题。</p>
+<p>我的答案是：</p>
+<p><strong>理论上可以，但不是简单地把 Redis 的命令执行改成多线程，就一定能获得更高性能。</strong></p>
+<p>我们从 Redis 的架构设计开始分析。</p>
+<h2 id="31-redis-为什么最初选择单线程"><strong>3.1 Redis 为什么最初选择单线程？</strong></h2>
+<p>Redis 最初的设计目标之一，就是构建一个高性能的内存数据服务。</p>
+<p>它的核心操作通常很简单：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>GET user:10001</span></span>
+<span class="line"><span>SET user:10001 Tom</span></span>
+<span class="line"><span>INCR counter</span></span>
+<span class="line"><span>HGET user:10001 name</span></span></code></pre>
+<p>这些操作大多数只涉及内存访问和简单计算。</p>
+<p>如果使用多线程执行：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread 1：GET user:10001</span></span>
+<span class="line"><span>Thread 2：SET user:10002 Tom</span></span>
+<span class="line"><span>Thread 3：INCR counter</span></span>
+<span class="line"><span>Thread 4：HGET user:10003 name</span></span></code></pre>
+<p>就必须解决多个线程同时访问 Redis 内部数据结构的问题。</p>
+<p>例如 Redis 的 Dict：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Redis DB</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   v</span></span>
+<span class="line"><span>Hash Table</span></span>
+<span class="line"><span>   |</span></span>
+<span class="line"><span>   +--- Bucket 1</span></span>
+<span class="line"><span>   +--- Bucket 2</span></span>
+<span class="line"><span>   +--- Bucket 3</span></span></code></pre>
+<p>假设两个线程同时操作同一个 Bucket：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread 1：SET user:10001 Tom</span></span>
+<span class="line"><span>Thread 2：DEL user:10001</span></span></code></pre>
+<p>可能发生：</p>
+<ul>
+<li>一个线程正在插入 DictEntry。</li>
+<li>另一个线程正在删除 DictEntry。</li>
+<li>一个线程正在扩容 Hash Table。</li>
+<li>另一个线程正在遍历 Hash Table。</li>
+</ul>
+<p>这就需要复杂的并发控制。</p>
+<h2 id="32-假设-redis-改成多线程会遇到什么问题"><strong>3.2 假设 Redis 改成多线程，会遇到什么问题？</strong></h2>
+<p>我们假设有 8 个 CPU 核心。</p>
+<p>采用多线程执行命令：</p>
+<p><strong>Redis Network Layer</strong></p>
+<p><strong>Worker 1</strong></p>
+<p>执行命令</p>
+<p><strong>Worker 2</strong></p>
+<p>执行命令</p>
+<p><strong>Worker 3</strong></p>
+<p>执行命令</p>
+<p><strong>Worker 4</strong></p>
+<p>执行命令</p>
+<p><strong>共享 Redis 数据结构</strong></p>
+<p>Dict / SDS / List / Set / ZSet</p>
+<p>假设性的多线程 Redis 架构，并非 Redis 当前默认架构。</p>
+<p>我们逐个分析。</p>
+<h3 id="问题一hash-table-并发安全"><strong>问题一：Hash Table 并发安全</strong></h3>
+<p>假设两个线程分别操作不同 Key：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread 1：SET user:10001 Tom</span></span>
+<span class="line"><span>Thread 2：SET user:10002 Jack</span></span></code></pre>
+<p>如果两个 Key 落在不同 Bucket，理论上可以并行。</p>
+<p>但是如果它们落在同一个 Bucket，就可能需要同步。</p>
+<p>另外，Hash Table 扩容和 Rehash 是更复杂的问题。</p>
+<p>Redis Dict 支持渐进式 Rehash。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>原始 Hash Table：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Table 0</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  +--- Bucket 0</span></span>
+<span class="line"><span>  +--- Bucket 1</span></span>
+<span class="line"><span>  +--- Bucket 2</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>开始扩容：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Table 0</span></span>
+<span class="line"><span>Table 1</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>逐步迁移 Bucket</span></span></code></pre>
+<p>如果多个线程同时执行命令，那么：</p>
+<ul>
+<li>谁负责迁移 Bucket？</li>
+<li>其他线程如何访问正在迁移的数据？</li>
+<li>如何保证读写正确？</li>
+<li>如何避免重复迁移？</li>
+<li>如何保证删除操作安全？</li>
+</ul>
+<p>这些问题都需要额外的并发设计。</p>
+<h3 id="问题二内存释放安全"><strong>问题二：内存释放安全</strong></h3>
+<p>假设：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread 1：读取一个 Value</span></span>
+<span class="line"><span>Thread 2：删除这个 Value</span></span></code></pre>
+<p>Thread 2 如果直接释放内存：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>free(value);</span></span></code></pre>
+<p>而 Thread 1 还在使用这个 Value，就可能产生 Use-After-Free。</p>
+<p>单线程命令执行模型中，这类命令之间的竞争容易避免。</p>
+<p>多线程执行后，就需要考虑：</p>
+<ul>
+<li>引用计数。</li>
+<li>内存回收时机。</li>
+<li>延迟释放。</li>
+<li>RCU 等技术。</li>
+<li>对象生命周期管理。</li>
+</ul>
+<p>这会增加实现复杂度。</p>
+<h3 id="问题三原子性与事务"><strong>问题三：原子性与事务</strong></h3>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>MULTI</span></span>
+<span class="line"><span>INCR account:1</span></span>
+<span class="line"><span>INCR account:2</span></span>
+<span class="line"><span>EXEC</span></span></code></pre>
+<p>Redis 的事务命令按照队列顺序执行，执行期间不会被其他客户端的普通命令插入。</p>
+<p>如果采用多线程执行：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread 1：执行事务中的 INCR account:1</span></span>
+<span class="line"><span>Thread 2：执行 SET account:1 100</span></span>
+<span class="line"><span>Thread 1：执行事务中的 INCR account:2</span></span></code></pre>
+<p>就需要确保事务语义不会被破坏。</p>
+<p>可以通过锁、事务调度器、分片等方式解决，但实现成本会提高。</p>
+<h3 id="问题四锁竞争可能抵消并行收益"><strong>问题四：锁竞争可能抵消并行收益</strong></h3>
+<p>假设：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>8 个线程</span></span>
+<span class="line"><span>100 万 QPS</span></span></code></pre>
+<p>如果所有线程都需要争夺一把全局锁：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Thread 1 ----\</span></span>
+<span class="line"><span>Thread 2 -----\</span></span>
+<span class="line"><span>Thread 3 ------> Global Lock</span></span>
+<span class="line"><span>...</span></span>
+<span class="line"><span>Thread 8 -----/</span></span></code></pre>
+<p>那么实际还是串行执行。</p>
+<p>如果采用细粒度锁：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Bucket 1 -> Lock 1</span></span>
+<span class="line"><span>Bucket 2 -> Lock 2</span></span>
+<span class="line"><span>Bucket 3 -> Lock 3</span></span></code></pre>
+<p>又会出现：</p>
+<ul>
+<li>锁管理开销。</li>
+<li>锁竞争。</li>
+<li>死锁风险。</li>
+<li>Cache Line 争夺。</li>
+<li>数据结构扩容时的全局协调。</li>
+</ul>
+<p>所以，多线程架构并不意味着性能必然线性提升。</p>
+<h2 id="33-那为什么-memcached-多线程能够做得比较好"><strong>3.3 那为什么 Memcached 多线程能够做得比较好？</strong></h2>
+<p>这里需要回到两者的业务模型。</p>
+<p>Memcached 的核心功能比较简单：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>GET</span></span>
+<span class="line"><span>SET</span></span>
+<span class="line"><span>DELETE</span></span>
+<span class="line"><span>INCR</span></span>
+<span class="line"><span>DECR</span></span></code></pre>
+<p>它没有 Redis 那样丰富的复杂数据结构。</p>
+<p>对于大量独立的 Key-Value：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>user:10001 -> Tom</span></span>
+<span class="line"><span>user:10002 -> Jack</span></span>
+<span class="line"><span>user:10003 -> Alice</span></span></code></pre>
+<p>不同请求之间有比较大的并行空间。</p>
+<p>可以把缓存分布在不同 Bucket 或 Item 上，由多个 Worker 处理。</p>
+<p>当然，Memcached 的 Hash Table、Item、Slab 等共享结构依然需要同步，并不是完全无锁。</p>
+<p>它的优势是：功能边界较简单，能够围绕简单 KV 操作设计多线程并发模型。</p>
+<h2 id="34-redis-有没有尝试过其他并发方案"><strong>3.4 Redis 有没有尝试过其他并发方案？</strong></h2>
+<p>Redis 实际上并不是完全排斥多线程。</p>
+<p>需要区分几个层次：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>机制</th><th>作用</th></tr></thead><tbody><tr><td>I/O Threads</td><td>并行处理部分网络读写</td></tr><tr><td>主线程执行命令</td><td>维持核心命令执行模型</td></tr><tr><td>Redis Cluster</td><td>将数据分布到多个节点</td></tr><tr><td>多实例部署</td><td>利用多个 CPU 核心</td></tr><tr><td>Redis 7 Functions / Lua</td><td>在单个执行上下文中执行服务端脚本</td></tr></tbody></table>
+<p>Redis 6 引入 I/O Threads 后，可以让网络 I/O 工作利用更多 CPU 核心。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>              多个客户端</span></span>
+<span class="line"><span>                   |</span></span>
+<span class="line"><span>                   v</span></span>
+<span class="line"><span>             Redis 网络层</span></span>
+<span class="line"><span>                   |</span></span>
+<span class="line"><span>          +--------+--------+</span></span>
+<span class="line"><span>          |        |        |</span></span>
+<span class="line"><span>          v        v        v</span></span>
+<span class="line"><span>        I/O 1    I/O 2    I/O 3</span></span>
+<span class="line"><span>          |        |        |</span></span>
+<span class="line"><span>          +--------+--------+</span></span>
+<span class="line"><span>                   |</span></span>
+<span class="line"><span>                   v</span></span>
+<span class="line"><span>             主线程执行命令</span></span>
+<span class="line"><span>                   |</span></span>
+<span class="line"><span>                   v</span></span>
+<span class="line"><span>              返回结果</span></span></code></pre>
+<p>这里 I/O Threads 的主要价值，是把网络数据读取、协议处理和写回等工作中的一部分分摊给多个线程。</p>
+<p>不同版本和配置下，具体哪些网络处理步骤由 I/O 线程执行会有所差异。</p>
+<p>但命令执行仍然主要由主线程负责。</p>
+<h2 id="35-redis-如何真正利用多个-cpu-核心"><strong>3.5 Redis 如何真正利用多个 CPU 核心？</strong></h2>
+<p>最常见的方式其实不是改造一个 Redis 实例，而是部署多个 Redis 实例。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>16 Core Server</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      +--- Redis Instance 1 -> CPU Core 1</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      +--- Redis Instance 2 -> CPU Core 2</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      +--- Redis Instance 3 -> CPU Core 3</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      +--- Redis Instance 4 -> CPU Core 4</span></span>
+<span class="line"><span>      |</span></span>
+<span class="line"><span>      +--- ...</span></span></code></pre>
+<p>每个实例有自己的：</p>
+<ul>
+<li>事件循环。</li>
+<li>数据字典。</li>
+<li>内存管理。</li>
+<li>命令执行线程。</li>
+</ul>
+<p>多个实例之间没有共享核心数据结构，因此可以并行执行命令。</p>
+<p>Redis Cluster 也是类似思想的扩展。</p>
+<p>它将 Key 分配到不同 Slot：</p>
+<p>\[ 16384 \text{ Hash Slots} \]</p>
+<p>不同节点负责不同的 Slot。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Redis Cluster</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Node 1：0 ~ 5000</span></span>
+<span class="line"><span>Node 2：5001 ~ 10000</span></span>
+<span class="line"><span>Node 3：10001 ~ 16383</span></span></code></pre>
+<p>这样不同节点可以并行处理不同请求。</p>
+<p>当然，实际 Slot 分布不一定像上面一样连续，也可以重新分配。</p>
+<p>这就是通过水平扩展来利用多核和多机资源的思想。</p>
+<h1 id="专题四把这些原理联系到-java-高并发编程"><strong>专题四：把这些原理联系到 Java 高并发编程</strong></h1>
+<p>我再带你把前面的知识迁移到 Java。</p>
+<p>这是非常重要的一步，因为理解了底层原理，才能在实际项目中判断如何优化。</p>
+<h2 id="41-为什么-java-的-arraylist-通常比-linkedlist-更适合遍历"><strong>4.1 为什么 Java 的 ArrayList 通常比 LinkedList 更适合遍历？</strong></h2>
+<p>看代码：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>List&#x3C;Integer> arrayList = new ArrayList&#x3C;>();</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>List&#x3C;Integer> linkedList = new LinkedList&#x3C;>();</span></span></code></pre>
+<p>两者遍历：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>for (Integer value : arrayList) {</span></span>
+<span class="line"><span>    sum += value;</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>for (Integer value : linkedList) {</span></span>
+<span class="line"><span>    sum += value;</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<p>两者时间复杂度都是 O(N)。</p>
+<p>但是实际性能通常有明显差距。</p>
+<p>原因：</p>
+<p>ArrayList：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>连续的引用数组</span></span>
+<span class="line"><span>    |</span></span>
+<span class="line"><span>    v</span></span>
+<span class="line"><span>Cache Line 预取</span></span>
+<span class="line"><span>    |</span></span>
+<span class="line"><span>    v</span></span>
+<span class="line"><span>连续访问</span></span></code></pre>
+<p>LinkedList：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Node 1</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  v</span></span>
+<span class="line"><span>Node 2</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  v</span></span>
+<span class="line"><span>Node 3</span></span>
+<span class="line"><span>  |</span></span>
+<span class="line"><span>  v</span></span>
+<span class="line"><span>Node 4</span></span></code></pre>
+<p>需要不断进行指针跳转。</p>
+<p>而且 LinkedList 每个节点还需要额外的对象头、前后指针等内存。</p>
+<p>所以在很多遍历场景下，ArrayList 的性能更好。</p>
+<p>这就是内存局部性的重要性。</p>
+<h2 id="42-为什么-concurrenthashmap-比-hashtable-更适合高并发"><strong>4.2 为什么 ConcurrentHashMap 比 Hashtable 更适合高并发？</strong></h2>
+<p>Hashtable 的很多方法使用 synchronized：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>public synchronized V get(Object key) {</span></span>
+<span class="line"><span>    // ...</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<p>这意味着多个线程可能竞争同一把对象锁。</p>
+<p>ConcurrentHashMap 则采用更细粒度的并发控制。</p>
+<p>JDK 8 中主要使用：</p>
+<ul>
+<li>CAS。</li>
+<li>synchronized（局部 Bucket 级别的同步）。</li>
+<li>volatile。</li>
+<li>节点链表和红黑树。</li>
+</ul>
+<p>简化理解：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Hashtable：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>所有操作</span></span>
+<span class="line"><span>    |</span></span>
+<span class="line"><span>    v</span></span>
+<span class="line"><span>全局锁</span></span>
+<span class="line"><span>    |</span></span>
+<span class="line"><span>    v</span></span>
+<span class="line"><span>执行</span></span></code></pre>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>ConcurrentHashMap：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Bucket 1 -> 可能独立操作</span></span>
+<span class="line"><span>Bucket 2 -> 可能独立操作</span></span>
+<span class="line"><span>Bucket 3 -> 可能独立操作</span></span>
+<span class="line"><span>Bucket 4 -> 可能独立操作</span></span></code></pre>
+<p>不同 Bucket 上的部分操作可以并发进行。</p>
+<p>但也要注意：</p>
+<p>如果多个线程竞争同一个 Key，或者发生扩容、树化等操作，依然需要同步。</p>
+<h2 id="43-为什么-disruptor-的性能很高"><strong>4.3 为什么 Disruptor 的性能很高？</strong></h2>
+<p><a href="https://images.openai.com/static-rsc-4/__uDFjeursvORtNWEp4AYr77P6rpitNWoqCL9hLs9X1NXZvvRPaQ84jS38S9dw3idIUKJlVa9CSsDDGbPevuHe1YVsm2kAw9AjjPWbWl1VdvcQRNIh6-OrjDkMJP_YxN2Hl8Hyo4BMqGN4MgzIERwLXTJYGQu7WHvEujnLOIWMc?purpose=inline">Disruptor框架深度解析与实战指南 - 染沁 - 博客园</a></p>
+<p><a href="https://www.cnblogs.com/lcha-coding/p/19129068?utm_source=chatgpt.com">cnblogs.com</a></p>
+<p>Disruptor 是一个非常值得研究的高性能并发框架。</p>
+<p>它的核心思想包括：</p>
+<ol>
+<li>RingBuffer：使用预分配的环形数组。</li>
+<li>Sequence：使用序列号管理生产者和消费者进度。</li>
+<li>CAS：协调并发访问。</li>
+<li>Padding：降低伪共享。</li>
+<li>减少锁竞争和对象分配。</li>
+</ol>
+<p>普通队列可能需要频繁进行：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>创建 Node</span></span>
+<span class="line"><span>分配内存</span></span>
+<span class="line"><span>更新指针</span></span>
+<span class="line"><span>释放 Node</span></span></code></pre>
+<p>Disruptor：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>提前创建 RingBuffer</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>生产者申请 Sequence</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>写入预分配槽位</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>消费者读取</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>重复使用槽位</span></span></code></pre>
+<p>这就和 Memcached 的 Slab 有一个共同思想：</p>
+<p><strong>尽量预分配内存，减少高频运行过程中的动态内存分配。</strong></p>
+<p>但两者并不完全相同：</p>
+<ul>
+<li>Memcached 的 Slab 主要解决缓存对象内存管理问题。</li>
+<li>Disruptor 的 RingBuffer 主要解决高并发生产消费和数据传递问题。</li>
+</ul>
+<p>它们只是都利用了预分配和内存复用的思想。</p>
+<h2 id="44-为什么-netty-使用池化内存"><strong>4.4 为什么 Netty 使用池化内存？</strong></h2>
+<p>Netty 也是一个非常典型的例子。</p>
+<p>如果每次收到网络数据都创建新的 ByteBuf：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>ByteBuf buffer = Unpooled.buffer(1024);</span></span></code></pre>
+<p>在大量网络请求下，可能出现：</p>
+<ul>
+<li>频繁内存分配。</li>
+<li>频繁释放。</li>
+<li>GC 压力。</li>
+<li>内存碎片。</li>
+<li>分配器竞争。</li>
+</ul>
+<p>Netty 提供了 PooledByteBufAllocator。</p>
+<p>核心思想是：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>预先分配内存区域</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>按照规格管理内存</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>需要时分配 ByteBuf</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>使用完毕归还内存池</span></span>
+<span class="line"><span>       |</span></span>
+<span class="line"><span>       v</span></span>
+<span class="line"><span>后续请求复用</span></span></code></pre>
+<p>这与 Slab、jemalloc 的分级内存管理有相通之处。</p>
+<p>Netty 的池化分配器还涉及 Arena、Chunk、Page、Subpage 等概念。</p>
+<p>对于 Java 后端工程师，我非常建议你把这套内存管理机制研究透彻。</p>
+<h1 id="专题五真正做高并发性能优化时应该怎么思考"><strong>专题五：真正做高并发性能优化时，应该怎么思考？</strong></h1>
+<p>前面讲了很多底层原理，现在我们把它变成一套可以用于线上系统的分析方法。</p>
+<p>假设有一个 Java 服务：</p>
+<ul>
+<li>16 核 CPU。</li>
+<li>32GB 内存。</li>
+<li>每秒 50 万次缓存读取。</li>
+<li>主要操作 Redis GET。</li>
+<li>CPU 使用率达到 95%。</li>
+<li>Redis 网络延迟正常，但整体请求延迟越来越高。</li>
+</ul>
+<p>你应该怎么排查？</p>
+<p>我建议按照下面的顺序。</p>
+<h2 id="51-第一步判断-cpu-到底消耗在哪里"><strong>5.1 第一步：判断 CPU 到底消耗在哪里</strong></h2>
+<p>不能看到 CPU 95% 就直接认为 Redis 单线程瓶颈。</p>
+<p>需要分别检查：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Java 应用 CPU</span></span>
+<span class="line"><span>Redis CPU</span></span>
+<span class="line"><span>网络中断 CPU</span></span>
+<span class="line"><span>系统态 CPU</span></span>
+<span class="line"><span>用户态 CPU</span></span></code></pre>
+<p>Linux 常用命令：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>top -H -p &#x3C;pid></span></span></code></pre>
+<p>查看进程各线程 CPU 使用情况。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>pidstat -t -p &#x3C;pid> 1</span></span></code></pre>
+<p>查看线程级 CPU 消耗。</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>perf top -p &#x3C;pid></span></span></code></pre>
+<p>观察热点函数。</p>
+<p>Redis 可以使用：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>redis-cli INFO CPU</span></span>
+<span class="line"><span>redis-cli INFO STATS</span></span>
+<span class="line"><span>redis-cli INFO MEMORY</span></span>
+<span class="line"><span>redis-cli INFO COMMANDSTATS</span></span></code></pre>
+<p>如果发现 Redis 主线程 CPU 很高，而 I/O 线程比较空闲，可能是命令执行成为瓶颈。</p>
+<h2 id="52-第二步判断是不是内存访问瓶颈"><strong>5.2 第二步：判断是不是内存访问瓶颈</strong></h2>
+<p>如果 CPU 并没有完全打满，但请求延迟很高，需要进一步分析。</p>
+<p>例如：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>perf stat -p &#x3C;pid> \</span></span>
+<span class="line"><span>  -e cycles,instructions,cache-references,cache-misses</span></span></code></pre>
+<p>重点观察：</p>
+<ul>
+<li>CPU cycles。</li>
+<li>Instructions。</li>
+<li>Cache References。</li>
+<li>Cache Misses。</li>
+</ul>
+<p>如果 Cache Miss 很高，可能存在内存访问局部性较差的问题。</p>
+<p>注意，Cache Miss 不能单独作为性能瓶颈结论，还要结合 IPC、内存带宽、CPU 型号和采样分析。</p>
+<h2 id="53-第三步判断是不是锁竞争"><strong>5.3 第三步：判断是不是锁竞争</strong></h2>
+<p>Java 可以使用：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>jcmd &#x3C;pid> Thread.print</span></span></code></pre>
+<p>查看线程状态和堆栈。</p>
+<p>还可以使用：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>async-profiler</span></span></code></pre>
+<p>观察 CPU、锁和分配热点。</p>
+<p>如果发现大量线程阻塞在同一个锁上，就需要考虑：</p>
+<ul>
+<li>是否存在全局锁。</li>
+<li>是否可以分段锁。</li>
+<li>是否可以线程本地化。</li>
+<li>是否可以批量操作。</li>
+<li>是否可以减少共享变量。</li>
+</ul>
+<h2 id="54-第四步判断是不是内存分配问题"><strong>5.4 第四步：判断是不是内存分配问题</strong></h2>
+<p>Java 可以观察：</p>
+<pre class="astro-code astro-code-themes min-light night-owl" style="--shiki-light:#24292eff;--shiki-dark:#d6deeb;--shiki-light-bg:#ffffff;--shiki-dark-bg:#011627; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="plaintext"><code><span class="line"><span>jstat -gc &#x3C;pid> 1000</span></span></code></pre>
+<p>查看 GC 变化。</p>
+<p>如果短生命周期对象大量创建，就可能产生较大的 GC 压力。</p>
+<p>优化方向：</p>
+<ul>
+<li>对象复用，但避免不必要的复杂对象池。</li>
+<li>减少临时对象。</li>
+<li>使用批量处理。</li>
+<li>使用 ByteBuffer 池化。</li>
+<li>使用 Netty PooledByteBufAllocator。</li>
+<li>对合适的数据结构采用预分配。</li>
+</ul>
+<p>这里要注意：Java 对象池并不一定比直接创建对象快。现代 JVM 的 TLAB、逃逸分析和 GC 优化已经非常成熟，应当先测量再决定是否池化。</p>
+<h1 id="六最后做一个知识体系总结"><strong>六、最后做一个知识体系总结</strong></h1>
+<p>这张图可以作为你以后分析高性能系统的知识地图。</p>
+<p><strong>高性能缓存系统</strong></p>
+<p><strong>内存管理</strong></p>
+<p>Slab / jemalloc</p>
+<p>Size Class</p>
+<p>Arena / TCache</p>
+<p>内存碎片</p>
+<p>对象复用</p>
+<p><strong>CPU 架构</strong></p>
+<p>CPU Cache</p>
+<p>Cache Line</p>
+<p>Cache Miss</p>
+<p>内存局部性</p>
+<p>伪共享</p>
+<p><strong>并发模型</strong></p>
+<p>多线程 / 单线程</p>
+<p>CAS</p>
+<p>锁竞争</p>
+<p>线程本地化</p>
+<p>无锁算法</p>
+<p><strong>系统架构</strong></p>
+<p>水平扩展</p>
+<p>Redis Cluster</p>
+<p>数据分片</p>
+<p>批量处理</p>
+<p>连接管理</p>
+<p><strong>最终目标：提高吞吐量、降低 P99 延迟、提高资源利用率</strong></p>
+<h1 id="七给你留三个架构师级思考题"><strong>七、给你留三个架构师级思考题</strong></h1>
+<p>这三个问题不是简单背答案，而是检验是否真正理解了上面的知识。</p>
+<p><strong>知识点自测</strong></p>
+<p>3/3 已作答</p>
+<p><strong>1. 假设 Redis 主线程 CPU 已经达到 100%，I/O Threads 几乎没有负载。你会优先考虑什么方案？</strong></p>
+<p>继续增加 I/O Threads</p>
+<p>使用 Pipeline、优化命令，必要时分片到多个实例</p>
+<p>直接增加 Redis 连接数</p>
+<p>增加客户端线程数</p>
+<p>回答正确</p>
+<p>瓶颈在命令执行而不是网络 I/O。应先定位热点命令、降低每条命令成本，再考虑多实例或 Cluster 分片。</p>
+<p><strong>2. 假设 Memcached 总内存还有 40%，但某个 Slab Class 已经无法分配 Chunk。最合理的解释是什么？</strong></p>
+<p>Linux 物理内存不足</p>
+<p>CPU Cache Miss 太高</p>
+<p>Class 间内存分配不均衡</p>
+<p>Hash Table 一定发生了死锁</p>
+<p>回答正确</p>
+<p>不同 Slab Class 的 Chunk 不能直接混用，可以检查 Slab 分布并评估 Slab Reassignment / Automove。</p>
+<p><strong>3. 两个 Java 线程分别更新不同的 volatile long，为什么仍然可能发生性能下降？</strong></p>
+<p>volatile 禁止 CPU 使用缓存</p>
+<p>可能发生 False Sharing</p>
+<p>Java 所有 volatile 变量共用一把锁</p>
+<p>long 一定不是原子操作</p>
+<p>回答正确</p>
+<p>两个变量可能处于同一个 Cache Line，导致缓存行在 CPU 核心间反复失效和转移。</p>
+<h1 id="3--3"><strong>3 / 3</strong></h1>
+<p>重新答题</p>
+<p><strong>我的建议：</strong> 接下来可以实际做一个 Java 微型实验项目：分别实现普通 HashMap、分段锁 HashMap、ThreadLocal 计数器、伪共享 Counter 和 Padding Counter，再用 JMH 测试吞吐量、延迟和 CPU 表现。这样你就能把今天讲的内存布局、Cache Line、CAS、锁竞争真正转化为自己的技术能力，而不是停留在概念层面。</p> </article> <hr class="my-8 border-dashed"> <a href="https://github.com/satnaing/astro-paper/edit/main/src/data/blog/myblog/MC与redis kv场景的比较.md" target="_blank" rel="noopener noreferrer" class="flex justify-baseline gap-1.5 opacity-80 hover:text-accent sm:hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg><span>Edit page</span></a> <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8"> <li> <a href="/tags/分布式缓存/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-2"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> 分布式缓存 </a> </li><li> <a href="/tags/mc/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-3"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> mc </a> </li><li> <a href="/tags/redis/" class="flex items-center gap-0.5 border-b-2 border-dashed border-foreground hover:-mt-0.5 hover:border-accent hover:text-accent focus-visible:border-none focus-visible:text-accent text-sm" data-astro-transition-scope="astro-36ssibgs-4"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-80 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg> redis </a> </li> </ul> <div id="btt-btn-container" class="fixed end-4 bottom-8 z-50 md:sticky md:end-auto md:float-end md:me-1 translate-y-14 opacity-0 transition duration-500"> <button data-button="back-to-top" class="group relative bg-background px-2 py-1 size-14 rounded-full shadow-xl md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none md:bg-background/35 md:bg-clip-padding md:backdrop-blur-lg"> <span id="progress-indicator" class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"></span> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block rotate-90 md:hidden"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg> <span class="sr-only text-sm group-hover:text-accent md:not-sr-only"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path d="M16 9l-4 -4" /><path d="M8 9l4 -4" /></svg>
+Back To Top
+</span> </button> </div> <script data-astro-rerun>
+  /** Scrolls the document to the top when
+   * the "Back to Top" button is clicked. */
+  function backToTop() {
+    const rootElement = document.documentElement;
+    const btnContainer = document.querySelector("#btt-btn-container");
+    const backToTopBtn = document.querySelector("[data-button='back-to-top']");
+    const progressIndicator = document.querySelector("#progress-indicator");
+
+    if (!rootElement || !btnContainer || !backToTopBtn || !progressIndicator)
+      return;
+
+    // Attach click event handler for back-to-top button
+    backToTopBtn.addEventListener("click", () => {
+      document.body.scrollTop = 0; // For Safari
+      document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+    });
+
+    // Handle button visibility according to scroll position
+    let lastVisible = null;
+    function handleScroll() {
+      const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
+      const scrollTop = rootElement.scrollTop;
+      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+
+      progressIndicator.style.setProperty(
+        "background-image",
+        `conic-gradient(var(--accent), var(--accent) ${scrollPercent}%, transparent ${scrollPercent}%)`
+      );
+
+      const isVisible = scrollTop / scrollTotal > 0.3;
+
+      if (isVisible !== lastVisible) {
+        btnContainer.classList.toggle("opacity-100", isVisible);
+        btnContainer.classList.toggle("translate-y-0", isVisible);
+        btnContainer.classList.toggle("opacity-0", !isVisible);
+        btnContainer.classList.toggle("translate-y-14", !isVisible);
+        lastVisible = isVisible;
+      }
+    }
+
+    let ticking = false;
+    document.addEventListener("scroll", () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+  backToTop();
+</script> <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start"><span class="italic">Share this post on:</span><div class="text-center"><a href="mailto:?subject=See%20this%20post&#38;body=https://henuhaigang.github.io/posts/mc%E4%B8%8Eredis-kv%E5%9C%BA%E6%99%AF%E7%9A%84%E6%AF%94%E8%BE%83/" title="Share this post via email" class="group inline-flex items-center gap-1 hover:text-accent scale-90 p-2 hover:rotate-6 sm:p-1"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg><span class="sr-only">Share this post via email</span> </a></div></div> <hr class="my-6 border-dashed"> <!-- Previous/Next Post Buttons --> <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2"> <a href="/posts/java-锁" class="flex w-full gap-1 hover:opacity-75"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block flex-none rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg> <div> <span>Previous Post</span> <div class="text-sm text-accent/85">synchronized(this)、synchronized(类名.class) 和 synchronized(lock) 记录</div> </div> </a> <a href="/posts/2026-10-15-ai开发流程" class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"> <div> <span>Next Post</span> <div class="text-sm text-accent/85">从0使用AI开发一个系统</div> </div> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block flex-none rtl:rotate-180"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg> </a> </div> </main> <footer class="app-layout mt-auto"> <div class="py-6 sm:py-4 border-t border-border flex flex-col items-center justify-between sm:flex-row-reverse"> <div class="flex flex-wrap items-center gap-1"> <a href="https://github.com/henuhaigang" title="scorpion's blog on GitHub" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg> <span class="sr-only">scorpion&#39;s blog on GitHub</span>  </a><a href="mailto:guangzhinew@gmail.com" title="Send an email to scorpion's blog" class="group inline-flex items-center gap-1 hover:text-accent p-2 hover:rotate-6 sm:p-1">  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg> <span class="sr-only">Send an email to scorpion&#39;s blog</span>  </a> </div> <div class="my-2 flex flex-col items-center whitespace-nowrap sm:flex-row"> <span>Copyright &#169; 2026</span> <span class="hidden sm:inline">&nbsp;|&nbsp;</span> <span>All rights reserved.</span> </div> </div> </footer>  </body></html> <script data-astro-rerun>
+  /** Create a progress indicator
+   *  at the top */
+  function createProgressBar() {
+    // Create the main container div
+    const progressContainer = document.createElement("div");
+    progressContainer.className =
+      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+
+    // Create the progress bar div
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    progressBar.id = "myBar";
+
+    // Append the progress bar to the progress container
+    progressContainer.appendChild(progressBar);
+
+    // Append the progress container to the document body or any other desired parent element
+    document.body.appendChild(progressContainer);
+  }
+  createProgressBar();
+
+  /** Update the progress bar
+   *  when user scrolls */
+  function updateScrollProgress() {
+    document.addEventListener("scroll", () => {
+      const winScroll =
+        document.body.scrollTop || document.documentElement.scrollTop;
+      const height =
+        document.documentElement.scrollHeight -
+        document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      if (document) {
+        const myBar = document.getElementById("myBar");
+        if (myBar) {
+          myBar.style.width = scrolled + "%";
+        }
+      }
+    });
+  }
+  updateScrollProgress();
+
+  /** Attaches links to headings in the document,
+   *  allowing sharing of sections easily */
+  function addHeadingLinks() {
+    const headings = Array.from(
+      document.querySelectorAll("h2, h3, h4, h5, h6")
+    );
+    for (const heading of headings) {
+      heading.classList.add("group");
+      const link = document.createElement("a");
+      link.className =
+        "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+      link.href = "#" + heading.id;
+
+      const span = document.createElement("span");
+      span.ariaHidden = "true";
+      span.innerText = "#";
+      link.appendChild(span);
+      heading.appendChild(link);
+    }
+  }
+  addHeadingLinks();
+
+  /** Attaches copy buttons to code blocks in the document,
+   * allowing users to copy code easily. */
+  function attachCopyButtons() {
+    const copyButtonLabel = "Copy";
+    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+
+    for (const codeBlock of codeBlocks) {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+
+      // Check if --file-name-offset custom property exists
+      const computedStyle = getComputedStyle(codeBlock);
+      const hasFileNameOffset =
+        computedStyle.getPropertyValue("--file-name-offset").trim() !== "";
+
+      // Determine the top positioning class
+      const topClass = hasFileNameOffset
+        ? "top-(--file-name-offset)"
+        : "-top-3";
+
+      const copyButton = document.createElement("button");
+      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+      copyButton.innerHTML = copyButtonLabel;
+      codeBlock.setAttribute("tabindex", "0");
+      codeBlock.appendChild(copyButton);
+
+      // wrap codebock with relative parent element
+      codeBlock?.parentNode?.insertBefore(wrapper, codeBlock);
+      wrapper.appendChild(codeBlock);
+
+      copyButton.addEventListener("click", async () => {
+        await copyCode(codeBlock, copyButton);
+      });
+    }
+
+    async function copyCode(block, button) {
+      const code = block.querySelector("code");
+      const text = code?.innerText;
+
+      await navigator.clipboard.writeText(text ?? "");
+
+      // visual feedback that task is completed
+      button.innerText = "Copied";
+
+      setTimeout(() => {
+        button.innerText = copyButtonLabel;
+      }, 700);
+    }
+  }
+  attachCopyButtons();
+
+  /* Go to page start after page swap */
+  document.addEventListener("astro:after-swap", () =>
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+  );
+</script>
