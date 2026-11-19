@@ -1,8 +1,8 @@
 ---
 layout:     post
 title:      mc redis  对比及相关知识记录
-pubDatetime: 2026-11-29T00:59:04.866Z
-modDatetime: 2026-11-29T00:59:04.866Z
+pubDatetime: 2026-11-19T00:59:04.866Z
+modDatetime: 2026-11-19T00:59:04.866Z
 author:     henuhaigang
 header-img: img/post-bg-algorithm.jpg
 catalog: true
